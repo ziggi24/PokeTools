@@ -769,12 +769,7 @@ class PokemonTeamBuilder {
     handleReset() {
         // Show confirmation dialog
         const confirmed = confirm(
-            'Are you sure you want to reset your team and settings?\\n\\n' +
-            'This will:\\n' +
-            '• Clear all Pokemon from your team\\n' +
-            '• Reset to Generation VIII (Sword/Shield)\\n' +
-            '• Clear all saved data\\n\\n' +
-            'This action cannot be undone.'
+            'Are you sure you want to reset your team and settings?'
         );
         
         if (confirmed) {
