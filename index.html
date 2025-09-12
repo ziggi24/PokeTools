@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeTools - Team Builder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1><i class="fas fa-users"></i> PokeTools</h1>
+            <div class="generation-selector">
+                <select id="generation-select">
+                    <option value="1">Generation I (Red/Blue/Yellow)</option>
+                    <option value="2">Generation II (Gold/Silver/Crystal)</option>
+                    <option value="3">Generation III (Ruby/Sapphire/Emerald)</option>
+                    <option value="4">Generation IV (Diamond/Pearl/Platinum)</option>
+                    <option value="5">Generation V (Black/White)</option>
+                    <option value="6">Generation VI (X/Y)</option>
+                    <option value="7">Generation VII (Sun/Moon)</option>
+                    <option value="8">Generation VIII (Sword/Shield)</option>
+                    <option value="9" selected>Generation IX (Scarlet/Violet)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Pokemon Search -->
+        <section class="pokemon-search">
+            <div class="search-container">
+                <input type="text" id="pokemon-search" placeholder="Search Pokemon...">
+                <button id="add-pokemon-btn"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </section>
+
+        <!-- Team Display -->
+        <section class="team-section">
+            <h2><i class="fas fa-shield-alt"></i> Your Team</h2>
+            <div class="team-grid" id="team-grid">
+                <div class="team-slot empty" data-slot="0">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Pokemon</span>
+                </div>
+                <div class="team-slot empty" data-slot="1">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Pokemon</span>
+                </div>
+                <div class="team-slot empty" data-slot="2">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Pokemon</span>
+                </div>
+                <div class="team-slot empty" data-slot="3">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Pokemon</span>
+                </div>
+                <div class="team-slot empty" data-slot="4">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Pokemon</span>
+                </div>
+                <div class="team-slot empty" data-slot="5">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Pokemon</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Type Coverage -->
+        <section class="type-coverage-section">
+            <h2><i class="fas fa-chart-pie"></i> Type Coverage</h2>
+            <div class="type-grid" id="type-coverage">
+                <!-- Type coverage will be dynamically generated -->
+            </div>
+        </section>
+
+        <!-- Battle Analysis -->
+        <section class="battle-section">
+            <h2><i class="fas fa-fist-raised"></i> Battle Analysis</h2>
+            <div class="opponent-search">
+                <input type="text" id="opponent-search" placeholder="Search opponent Pokemon...">
+                <div id="opponent-results" class="search-results"></div>
+            </div>
+            <div id="battle-recommendations" class="battle-recommendations">
+                <p class="no-opponent">Select an opponent Pokemon to see battle recommendations</p>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner">
+                <i class="fas fa-pokeball fa-spin"></i>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Reset Section -->
+        <section class="reset-section">
+            <button id="reset-btn" class="reset-button">
+                <i class="fas fa-trash-alt"></i>
+                Reset Team & Settings
+            </button>
+            <p class="reset-warning">This will clear your team and reset to default generation</p>
+        </section>
+    </div>
+
+    <script src="scripts/main.js"></script>
+</body>
+</html>
