@@ -662,7 +662,7 @@ class PokemonTeamBuilder {
 
     openBulbapedia(pokemonName) {
         const formattedName = pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1);
-        const url = `https://bulbapedia.bulbagarden.net/wiki/${formattedName}_(Pokémon)`;
+        const url = `https://bulbapedia.bulbagarden.net/wiki/${formattedName}_(Pokémon)#Base_stats`;
         window.open(url, '_blank');
     }
 
