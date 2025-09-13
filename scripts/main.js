@@ -507,11 +507,13 @@ class PokemonTeamBuilder {
                 : '<div class="coverage-details"><span class="no-coverage">No team coverage</span></div>';
             
             coverageItem.innerHTML = `
-                <div class="coverage-header">
-                    <img src="https://archives.bulbagarden.net/media/upload/thumb/a/a0/${this.getTypeIconName(type)}/32px-${this.getTypeIconName(type)}" 
-                         alt="${type}" class="type-icon" 
-                         onerror="this.style.display='none'">
-                    <div class="type-name">${type}</div>
+                <div class="coverage-header type-${type}">
+                    <div class="type-info">
+                        <img src="https://archives.bulbagarden.net/media/upload/thumb/a/a0/${this.getTypeIconName(type)}/32px-${this.getTypeIconName(type)}" 
+                             alt="${type}" class="type-icon" 
+                             onerror="this.style.display='none'">
+                        <div class="type-name">${type}</div>
+                    </div>
                     <div class="coverage-status coverage-${coverage.effectiveness}">${coverage.label}</div>
                 </div>
                 ${pokemonDetails}
@@ -561,10 +563,11 @@ class PokemonTeamBuilder {
                 
                 let hasImmunity = false;
                 let hasSuperEffective = false;
-                let hasResistance = false;
+                let defensiveMultiplier = 1;
                 const reasons = [];
+                const resistanceCount = [];
                 
-                // Check defensive capabilities (immunities and resistances)
+                // Check defensive capabilities - calculate combined effectiveness for dual types
                 pokemon.types.forEach(pokemonType => {
                     const defenseType = pokemonType.type.name;
                     const incomingEffectiveness = this.getTypeEffectiveness(targetType, defenseType);
@@ -572,12 +575,30 @@ class PokemonTeamBuilder {
                     
                     if (incomingEffectiveness === 0) {
                         hasImmunity = true;
-                        reasons.push(`🛡️ Immune to ${targetType}`);
-                    } else if (incomingEffectiveness < 1) {
-                        hasResistance = true;
-                        reasons.push(`🔸 Resists ${targetType}`);
+                        defensiveMultiplier = 0; // Immunity overrides everything
+                    } else if (!hasImmunity) {
+                        // Only calculate multiplier if not immune
+                        defensiveMultiplier *= incomingEffectiveness;
+                        
+                        if (incomingEffectiveness < 1) {
+                            resistanceCount.push(defenseType);
+                        }
                     }
                 });
+                
+                // Handle defensive reasons based on combined effectiveness
+                if (hasImmunity) {
+                    reasons.push(`🛡️ Immune to ${targetType}`);
+                } else if (defensiveMultiplier < 1) {
+                    if (resistanceCount.length === 2 && pokemon.types.length === 2) {
+                        // Both types resist - double resistance
+                        reasons.push(`🔸 Double resist ${targetType}`);
+                    } else if (resistanceCount.length === 1) {
+                        // Single resistance that isn't cancelled out
+                        reasons.push(`🔸 Resists ${targetType}`);
+                    }
+                    // If defensiveMultiplier >= 1 but we had resistances, they were cancelled out by weaknesses
+                }
                 
                 // Check offensive capabilities
                 pokemon.types.forEach(pokemonType => {
@@ -596,10 +617,10 @@ class PokemonTeamBuilder {
                 let effectivenessRating;
                 let effectivenessLabel;
                 
-                if (hasImmunity || (hasSuperEffective && hasResistance)) {
+                if (hasImmunity || (hasSuperEffective && defensiveMultiplier < 1)) {
                     effectivenessRating = 'super-effective';
                     effectivenessLabel = 'Strong';
-                } else if (hasSuperEffective || hasResistance) {
+                } else if (hasSuperEffective || defensiveMultiplier < 1) {
                     effectivenessRating = 'effective';
                     effectivenessLabel = 'Normal';
                 } else if (reasons.length > 0) {

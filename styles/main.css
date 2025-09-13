@@ -381,18 +381,102 @@ section h2 {
 
 .coverage-header {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.25rem;
+    justify-content: space-between;
+    gap: 0.5rem;
     text-align: center;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.5rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+}
+
+/* Type-colored headers */
+.coverage-header.type-normal {
+    background-color: var(--type-normal);
+    color: white;
+}
+.coverage-header.type-fire {
+    background-color: var(--type-fire);
+    color: white;
+}
+.coverage-header.type-water {
+    background-color: var(--type-water);
+    color: white;
+}
+.coverage-header.type-electric {
+    background-color: var(--type-electric);
+    color: black;
+}
+.coverage-header.type-grass {
+    background-color: var(--type-grass);
+    color: white;
+}
+.coverage-header.type-ice {
+    background-color: var(--type-ice);
+    color: black;
+}
+.coverage-header.type-fighting {
+    background-color: var(--type-fighting);
+    color: white;
+}
+.coverage-header.type-poison {
+    background-color: var(--type-poison);
+    color: white;
+}
+.coverage-header.type-ground {
+    background-color: var(--type-ground);
+    color: black;
+}
+.coverage-header.type-flying {
+    background-color: var(--type-flying);
+    color: white;
+}
+.coverage-header.type-psychic {
+    background-color: var(--type-psychic);
+    color: white;
+}
+.coverage-header.type-bug {
+    background-color: var(--type-bug);
+    color: white;
+}
+.coverage-header.type-rock {
+    background-color: var(--type-rock);
+    color: white;
+}
+.coverage-header.type-ghost {
+    background-color: var(--type-ghost);
+    color: white;
+}
+.coverage-header.type-dragon {
+    background-color: var(--type-dragon);
+    color: white;
+}
+.coverage-header.type-dark {
+    background-color: var(--type-dark);
+    color: white;
+}
+.coverage-header.type-steel {
+    background-color: var(--type-steel);
+    color: black;
+}
+.coverage-header.type-fairy {
+    background-color: var(--type-fairy);
+    color: white;
 }
 
 .type-coverage-item .type-name {
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: bold;
     text-transform: capitalize;
+}
+
+.coverage-header .type-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .coverage-details {
@@ -457,26 +541,8 @@ section h2 {
     border-radius: 1rem;
     font-weight: bold;
     white-space: nowrap;
-}
-
-.coverage-super-effective {
-    background: var(--success-color);
-    color: white;
-}
-
-.coverage-effective {
-    background: var(--warning-color);
-    color: white;
-}
-
-.coverage-not-very-effective {
-    background: var(--danger-color);
-    color: white;
-}
-
-.coverage-no-effect {
-    background: var(--text-secondary);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
 
 /* Battle Section */
