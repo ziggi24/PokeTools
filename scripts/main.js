@@ -139,30 +139,87 @@ class PokemonTeamBuilder {
 
     async loadTypeChart() {
         try {
-            // Type effectiveness chart - simplified version
-            this.typeChart = {
-                normal: { weakTo: ['fighting'], resistsTo: [], immuneTo: ['ghost'] },
-                fire: { weakTo: ['water', 'ground', 'rock'], resistsTo: ['fire', 'grass', 'ice', 'bug', 'steel', 'fairy'], immuneTo: [] },
-                water: { weakTo: ['electric', 'grass'], resistsTo: ['fire', 'water', 'ice', 'steel'], immuneTo: [] },
-                electric: { weakTo: ['ground'], resistsTo: ['electric', 'flying', 'steel'], immuneTo: [] },
-                grass: { weakTo: ['fire', 'ice', 'poison', 'flying', 'bug'], resistsTo: ['water', 'electric', 'grass', 'ground'], immuneTo: [] },
-                ice: { weakTo: ['fire', 'fighting', 'rock', 'steel'], resistsTo: ['ice'], immuneTo: [] },
-                fighting: { weakTo: ['flying', 'psychic', 'fairy'], resistsTo: ['bug', 'rock', 'dark'], immuneTo: [] },
-                poison: { weakTo: ['ground', 'psychic'], resistsTo: ['grass', 'fighting', 'poison', 'bug', 'fairy'], immuneTo: [] },
-                ground: { weakTo: ['water', 'grass', 'ice'], resistsTo: ['poison', 'rock'], immuneTo: ['electric'] },
-                flying: { weakTo: ['electric', 'ice', 'rock'], resistsTo: ['grass', 'fighting', 'bug'], immuneTo: ['ground'] },
-                psychic: { weakTo: ['bug', 'ghost', 'dark'], resistsTo: ['fighting', 'psychic'], immuneTo: [] },
-                bug: { weakTo: ['fire', 'flying', 'rock'], resistsTo: ['grass', 'fighting', 'ground'], immuneTo: [] },
-                rock: { weakTo: ['water', 'grass', 'fighting', 'ground', 'steel'], resistsTo: ['normal', 'fire', 'poison', 'flying'], immuneTo: [] },
-                ghost: { weakTo: ['ghost', 'dark'], resistsTo: ['poison', 'bug'], immuneTo: ['normal', 'fighting'] },
-                dragon: { weakTo: ['ice', 'dragon', 'fairy'], resistsTo: ['fire', 'water', 'electric', 'grass'], immuneTo: [] },
-                dark: { weakTo: ['fighting', 'bug', 'fairy'], resistsTo: ['ghost', 'dark'], immuneTo: ['psychic'] },
-                steel: { weakTo: ['fire', 'fighting', 'ground'], resistsTo: ['normal', 'grass', 'ice', 'flying', 'psychic', 'bug', 'rock', 'dragon', 'steel', 'fairy'], immuneTo: ['poison'] },
-                fairy: { weakTo: ['poison', 'steel'], resistsTo: ['fighting', 'bug', 'dark'], immuneTo: ['dragon'] }
-            };
+            this.showLoading();
+            this.typeChart = {};
+            this.typeEffectivenessChart = {};
+            
+            // Get all types available in current generation
+            const allTypes = this.getGenerationTypes();
+            
+            // Fetch type data for each type
+            for (const typeName of allTypes) {
+                try {
+                    const response = await fetch(`https://pokeapi.co/api/v2/type/${typeName}`);
+                    if (!response.ok) continue;
+                    
+                    const typeData = await response.json();
+                    
+                    // Build effectiveness chart
+                    if (!this.typeEffectivenessChart[typeName]) {
+                        this.typeEffectivenessChart[typeName] = {};
+                    }
+                    
+                    // Parse damage relations
+                    const damageRelations = typeData.damage_relations;
+                    
+                    // Double damage to (2x effectiveness)
+                    damageRelations.double_damage_to.forEach(type => {
+                        this.typeEffectivenessChart[typeName][type.name] = 2;
+                    });
+                    
+                    // Half damage to (0.5x effectiveness)
+                    damageRelations.half_damage_to.forEach(type => {
+                        this.typeEffectivenessChart[typeName][type.name] = 0.5;
+                    });
+                    
+                    // No damage to (0x effectiveness - immunity)
+                    damageRelations.no_damage_to.forEach(type => {
+                        this.typeEffectivenessChart[typeName][type.name] = 0;
+                    });
+                    
+                } catch (typeError) {
+                    console.error(`Error loading type data for ${typeName}:`, typeError);
+                }
+            }
+            
+            console.log('Type effectiveness chart loaded:', this.typeEffectivenessChart);
+            // Debug: Check if Electric -> Ground = 0
+            if (this.typeEffectivenessChart.electric) {
+                console.log('Electric type data:', this.typeEffectivenessChart.electric);
+                console.log('Electric vs Ground:', this.typeEffectivenessChart.electric.ground);
+            }
+            
         } catch (error) {
             console.error('Error loading type chart:', error);
+            // Fallback to basic chart if API fails
+            this.createFallbackTypeChart();
+        } finally {
+            this.hideLoading();
         }
+    }
+    
+    createFallbackTypeChart() {
+        // Simplified fallback with basic immunities
+        this.typeEffectivenessChart = {
+            normal: { fighting: 2, ghost: 0 },
+            fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
+            water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+            electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
+            grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
+            ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
+            fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
+            poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
+            ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
+            flying: { electric: 0.5, grass: 2, ice: 0.5, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
+            psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
+            bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
+            rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
+            ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
+            dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+            dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
+            steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
+            fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
+        };
     }
 
     async loadPokemonList() {
@@ -412,7 +469,7 @@ class PokemonTeamBuilder {
     updateTypeCoverage() {
         const typeCoverageContainer = document.getElementById('type-coverage');
         
-        if (!this.typeChart) {
+        if (!this.typeEffectivenessChart || Object.keys(this.typeEffectivenessChart).length === 0) {
             typeCoverageContainer.innerHTML = '<p>Loading type chart...</p>';
             return;
         }
@@ -427,19 +484,37 @@ class PokemonTeamBuilder {
             const coverageItem = document.createElement('div');
             coverageItem.className = 'type-coverage-item';
             
-            const pokemonIcons = coverage.pokemon.length > 0 
-                ? `<div class="coverage-pokemon">${coverage.pokemon.map(p => 
-                    `<img src="${p.sprites.front_default}" alt="${p.name}" class="coverage-pokemon-icon" title="${p.name}">`
-                  ).join('')}</div>`
-                : '<div class="coverage-pokemon"><span class="no-coverage">—</span></div>';
+            const pokemonDetails = coverage.pokemon.length > 0 
+                ? `<div class="coverage-details">
+                    ${coverage.pokemon.map((p, index) => {
+                        const details = coverage.details && coverage.details[index];
+                        const mainReasons = details ? details.reasons.slice(0, 2) : [];
+                        
+                        return `
+                            <div class="coverage-pokemon-item">
+                                <img src="${p.sprites.front_default}" alt="${p.name}" class="coverage-pokemon-icon">
+                                <div class="coverage-pokemon-info">
+                                    <div class="coverage-pokemon-name">${p.name}</div>
+                                    ${mainReasons.length > 0 ? 
+                                        `<div class="coverage-pokemon-reasons">${mainReasons.join('\n')}</div>` : 
+                                        ''
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                   </div>`
+                : '<div class="coverage-details"><span class="no-coverage">No team coverage</span></div>';
             
             coverageItem.innerHTML = `
-                <img src="https://archives.bulbagarden.net/media/upload/thumb/a/a0/${this.getTypeIconName(type)}/32px-${this.getTypeIconName(type)}" 
-                     alt="${type}" class="type-icon" 
-                     onerror="this.style.display='none'">
-                <div class="type-name">${type}</div>
-                <div class="coverage-status coverage-${coverage.effectiveness}">${coverage.label}</div>
-                ${pokemonIcons}
+                <div class="coverage-header">
+                    <img src="https://archives.bulbagarden.net/media/upload/thumb/a/a0/${this.getTypeIconName(type)}/32px-${this.getTypeIconName(type)}" 
+                         alt="${type}" class="type-icon" 
+                         onerror="this.style.display='none'">
+                    <div class="type-name">${type}</div>
+                    <div class="coverage-status coverage-${coverage.effectiveness}">${coverage.label}</div>
+                </div>
+                ${pokemonDetails}
             `;
             
             typeCoverageContainer.appendChild(coverageItem);
@@ -469,49 +544,91 @@ class PokemonTeamBuilder {
             coverage[type] = {
                 effectiveness: 'no-effect',
                 label: 'None',
-                pokemon: []
+                pokemon: [],
+                details: []
             };
         });
         
-        // Check each Pokemon's offensive coverage
+        // Check each Pokemon's offensive and defensive coverage
         this.team.forEach(pokemon => {
             if (!pokemon) return;
             
-            pokemon.types.forEach(pokemonType => {
-                const attackType = pokemonType.type.name;
+            allTypes.forEach(targetType => {
+                const pokemonDetails = {
+                    pokemon: pokemon,
+                    reasons: []
+                };
                 
-                allTypes.forEach(defendType => {
-                    const effectiveness = this.getTypeEffectiveness(attackType, defendType);
+                let hasImmunity = false;
+                let hasSuperEffective = false;
+                let hasResistance = false;
+                const reasons = [];
+                
+                // Check defensive capabilities (immunities and resistances)
+                pokemon.types.forEach(pokemonType => {
+                    const defenseType = pokemonType.type.name;
+                    const incomingEffectiveness = this.getTypeEffectiveness(targetType, defenseType);
+                    console.log(`Type coverage: ${targetType} -> ${defenseType}: ${incomingEffectiveness}`); // Debug
                     
-                    if (effectiveness > 1) {
-                        // Super effective
-                        if (coverage[defendType].effectiveness !== 'super-effective') {
-                            coverage[defendType] = {
-                                effectiveness: 'super-effective',
-                                label: 'Strong',
-                                pokemon: []
-                            };
-                        }
-                        if (!coverage[defendType].pokemon.find(p => p.name === pokemon.name)) {
-                            coverage[defendType].pokemon.push(pokemon);
-                        }
-                    } else if (effectiveness === 1 && coverage[defendType].effectiveness === 'no-effect') {
-                        // Normal effectiveness (only if we don't already have super effective)
-                        coverage[defendType] = {
-                            effectiveness: 'effective',
-                            label: 'Normal',
-                            pokemon: [pokemon]
-                        };
-                    } else if (effectiveness < 1 && effectiveness > 0 && 
-                             coverage[defendType].effectiveness === 'no-effect') {
-                        // Not very effective (only if we have nothing better)
-                        coverage[defendType] = {
-                            effectiveness: 'not-very-effective',
-                            label: 'Weak',
-                            pokemon: [pokemon]
-                        };
+                    if (incomingEffectiveness === 0) {
+                        hasImmunity = true;
+                        reasons.push(`🛡️ Immune to ${targetType}`);
+                    } else if (incomingEffectiveness < 1) {
+                        hasResistance = true;
+                        reasons.push(`🔸 Resists ${targetType}`);
                     }
                 });
+                
+                // Check offensive capabilities
+                pokemon.types.forEach(pokemonType => {
+                    const attackType = pokemonType.type.name;
+                    const effectiveness = this.getTypeEffectiveness(attackType, targetType);
+                    
+                    if (effectiveness > 1) {
+                        hasSuperEffective = true;
+                        reasons.push(`💪 ${attackType.charAt(0).toUpperCase() + attackType.slice(1)} super effective`);
+                    }
+                });
+                
+                pokemonDetails.reasons = reasons;
+                
+                // Determine overall effectiveness based on what we found
+                let effectivenessRating;
+                let effectivenessLabel;
+                
+                if (hasImmunity || (hasSuperEffective && hasResistance)) {
+                    effectivenessRating = 'super-effective';
+                    effectivenessLabel = 'Strong';
+                } else if (hasSuperEffective || hasResistance) {
+                    effectivenessRating = 'effective';
+                    effectivenessLabel = 'Normal';
+                } else if (reasons.length > 0) {
+                    effectivenessRating = 'not-very-effective';
+                    effectivenessLabel = 'Weak';
+                } else {
+                    return; // Skip if no relevant coverage
+                }
+                
+                // Update coverage if this is better than what we have or add to existing
+                if (coverage[targetType].effectiveness === 'no-effect' || 
+                    (effectivenessRating === 'super-effective' && coverage[targetType].effectiveness !== 'super-effective') ||
+                    (effectivenessRating === 'effective' && coverage[targetType].effectiveness === 'not-very-effective')) {
+                    
+                    coverage[targetType] = {
+                        effectiveness: effectivenessRating,
+                        label: effectivenessLabel,
+                        pokemon: [],
+                        details: []
+                    };
+                }
+                
+                // Add Pokemon if it matches the current effectiveness level
+                if (effectivenessRating === coverage[targetType].effectiveness &&
+                    !coverage[targetType].pokemon.find(p => p.name === pokemon.name)) {
+                    
+                    coverage[targetType].pokemon.push(pokemon);
+                    coverage[targetType].details.push(pokemonDetails);
+                }
             });
         });
         
@@ -519,29 +636,29 @@ class PokemonTeamBuilder {
     }
 
     getTypeEffectiveness(attackType, defenseType) {
-        // Simplified type effectiveness calculation
-        const chart = {
-            normal: { rock: 0.5, ghost: 0, steel: 0.5 },
-            fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
-            water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
-            electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
-            grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
-            ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
-            fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
-            poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
-            ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
-            flying: { electric: 0.5, grass: 2, ice: 0.5, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
-            psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
-            bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
-            rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
-            ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
-            dragon: { dragon: 2, steel: 0.5, fairy: 0 },
-            dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
-            steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
-            fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
-        };
-
-        return chart[attackType]?.[defenseType] || 1;
+        // Use API-loaded type effectiveness chart
+        if (this.typeEffectivenessChart && this.typeEffectivenessChart[attackType]) {
+            const effectiveness = this.typeEffectivenessChart[attackType][defenseType];
+            
+            // Debug log for Electric vs Ground specifically
+            if (attackType === 'electric' && defenseType === 'ground') {
+                console.log(`DEBUG getTypeEffectiveness: ${attackType} vs ${defenseType}`);
+                console.log('Raw effectiveness value:', effectiveness);
+                console.log('Type of effectiveness:', typeof effectiveness);
+                console.log('Chart exists:', !!this.typeEffectivenessChart[attackType]);
+            }
+            
+            // Explicitly check for 0 (immunity) and undefined/null
+            if (effectiveness === 0) {
+                return 0; // Immunity
+            } else if (effectiveness !== undefined && effectiveness !== null) {
+                return effectiveness;
+            }
+        }
+        
+        // Fallback to 1 (normal effectiveness) if data not available
+        console.log(`FALLBACK: ${attackType} vs ${defenseType} = 1 (no data found)`);
+        return 1;
     }
 
     selectOpponent(pokemonData) {
@@ -559,47 +676,106 @@ class PokemonTeamBuilder {
     analyzeMatchup(opponentPokemon) {
         const recommendations = [];
         
+        // Check if type effectiveness chart is loaded
+        if (!this.typeEffectivenessChart || Object.keys(this.typeEffectivenessChart).length === 0) {
+            console.warn('Type effectiveness chart not loaded, using fallback');
+            this.createFallbackTypeChart();
+        }
+        
         this.team.forEach((pokemon, index) => {
             if (!pokemon) return;
 
             let score = 0;
             const reasons = [];
+            const offensiveReasons = [];
+            const defensiveReasons = [];
 
-            // Type effectiveness analysis
+            // Offensive analysis - how well this Pokemon attacks the opponent
             pokemon.types.forEach(pokemonType => {
                 opponentPokemon.types.forEach(opponentType => {
                     const effectiveness = this.getTypeEffectiveness(pokemonType.type.name, opponentType.type.name);
                     if (effectiveness > 1) {
-                        score += 2;
-                        reasons.push(`${pokemonType.type.name} is super effective vs ${opponentType.type.name}`);
+                        score += 3;
+                        offensiveReasons.push(`${pokemonType.type.name} attacks are super effective vs ${opponentType.type.name}`);
                     } else if (effectiveness < 1 && effectiveness > 0) {
                         score -= 1;
-                        reasons.push(`${pokemonType.type.name} is not very effective vs ${opponentType.type.name}`);
+                        offensiveReasons.push(`${pokemonType.type.name} attacks are not very effective vs ${opponentType.type.name}`);
                     } else if (effectiveness === 0) {
-                        score -= 3;
-                        reasons.push(`${pokemonType.type.name} has no effect on ${opponentType.type.name}`);
+                        score -= 2;
+                        offensiveReasons.push(`${pokemonType.type.name} attacks have no effect on ${opponentType.type.name}`);
                     }
                 });
             });
 
-            // Defensive analysis
+            // Defensive analysis - how well this Pokemon defends against opponent
             opponentPokemon.types.forEach(opponentType => {
+                // Check if ANY of this Pokemon's types provide immunity to the opponent's type
+                let hasImmunityToThisType = false;
+                let hasResistanceToThisType = false;
+                let hasWeaknessToThisType = false;
+                
                 pokemon.types.forEach(pokemonType => {
                     const effectiveness = this.getTypeEffectiveness(opponentType.type.name, pokemonType.type.name);
-                    if (effectiveness > 1) {
-                        score -= 1;
-                        reasons.push(`Weak to opponent's ${opponentType.type.name} attacks`);
+                    console.log(`${opponentType.type.name} -> ${pokemonType.type.name}: ${effectiveness}`); // Debug
+                    
+                    if (effectiveness === 0) {
+                        hasImmunityToThisType = true;
                     } else if (effectiveness < 1) {
-                        score += 1;
-                        reasons.push(`Resists opponent's ${opponentType.type.name} attacks`);
+                        hasResistanceToThisType = true;
+                    } else if (effectiveness > 1) {
+                        hasWeaknessToThisType = true;
                     }
                 });
+                
+                // Immunity overrides everything else
+                if (hasImmunityToThisType) {
+                    score += 4; // Immunity is very valuable
+                    defensiveReasons.push(`🛡️ Immune to ${opponentType.type.name} attacks`);
+                } else if (hasResistanceToThisType && !hasWeaknessToThisType) {
+                    score += 2;
+                    defensiveReasons.push(`🔸 Resists ${opponentType.type.name} attacks`);
+                } else if (hasWeaknessToThisType && !hasResistanceToThisType) {
+                    score -= 2;
+                    defensiveReasons.push(`⚠️ Weak to ${opponentType.type.name} attacks`);
+                }
             });
+
+            // Combine reasons, prioritizing the most important ones
+            const combinedReasons = [];
+            
+            // Add immunity reasons first (highest priority)
+            const immunityReasons = defensiveReasons.filter(r => r.includes('Immune'));
+            combinedReasons.push(...immunityReasons);
+            
+            // Add super effective offensive reasons
+            const superEffectiveReasons = offensiveReasons.filter(r => r.includes('super effective'));
+            combinedReasons.push(...superEffectiveReasons);
+            
+            // Add resistance reasons
+            const resistanceReasons = defensiveReasons.filter(r => r.includes('Resists'));
+            combinedReasons.push(...resistanceReasons);
+            
+            // Add weakness reasons
+            const weaknessReasons = defensiveReasons.filter(r => r.includes('Weak to'));
+            combinedReasons.push(...weaknessReasons);
+            
+            // Add other offensive reasons
+            const otherOffensiveReasons = offensiveReasons.filter(r => !r.includes('super effective'));
+            combinedReasons.push(...otherOffensiveReasons);
+            
+            // Debug log for Krookodile
+            if (pokemon.name.toLowerCase() === 'krookodile') {
+                console.log('Krookodile analysis:');
+                console.log('Defensive reasons:', defensiveReasons);
+                console.log('Offensive reasons:', offensiveReasons);
+                console.log('Combined reasons:', combinedReasons);
+                console.log('Score:', score);
+            }
 
             recommendations.push({
                 pokemon,
                 score,
-                reasons: reasons.slice(0, 2) // Limit to top 2 reasons
+                reasons: combinedReasons.slice(0, 3) // Limit to top 3 most important reasons
             });
         });
 
@@ -646,12 +822,24 @@ class PokemonTeamBuilder {
                 const scoreClass = rec.score > 0 ? 'success' : rec.score < 0 ? 'danger' : 'warning';
                 const scoreText = rec.score > 0 ? 'Good' : rec.score < 0 ? 'Poor' : 'Neutral';
                 
+                // Apply highlighting to reasons
+                const highlightedReasons = rec.reasons.map(reason => {
+                    if (reason.includes('Immune')) {
+                        return `<span class="immunity-highlight">${reason}</span>`;
+                    } else if (reason.includes('super effective')) {
+                        return `<span class="super-effective-highlight">${reason}</span>`;
+                    } else if (reason.includes('Resists')) {
+                        return `<span class="resistance-highlight">${reason}</span>`;
+                    }
+                    return reason;
+                }).join('<br>');
+                
                 return `
                     <div class="recommendation-item">
                         <img src="${rec.pokemon.sprites.front_default}" alt="${rec.pokemon.name}" class="pokemon-sprite">
                         <div class="recommendation-info">
                             <div class="pokemon-name">${rec.pokemon.name}</div>
-                            <div class="recommendation-reason">${rec.reasons.join(', ') || 'No special advantages'}</div>
+                            <div class="recommendation-reason">${highlightedReasons || 'No special advantages'}</div>
                         </div>
                         <div class="recommendation-score ${scoreClass}">${scoreText}</div>
                     </div>
