@@ -15,8 +15,9 @@ class PokemonTeamBuilder {
         this.bindEvents();
         await this.loadTypeChart();
         await this.loadPokemonList();
-        this.loadFromStorage();
+        await this.loadFromStorage();
         this.updateTypeCoverage();
+        this.updateStatsDisplay();
     }
 
     bindEvents() {
@@ -32,6 +33,10 @@ class PokemonTeamBuilder {
 
         // Reset button
         document.getElementById('reset-btn').addEventListener('click', this.handleReset.bind(this));
+
+        // Stats controls
+        document.getElementById('stat-select').addEventListener('change', this.updateStatsDisplay.bind(this));
+        document.getElementById('stat-order-toggle').addEventListener('change', this.updateStatsDisplay.bind(this));
 
         // Team slots
         document.querySelectorAll('.team-slot').forEach((slot, index) => {
@@ -410,6 +415,7 @@ class PokemonTeamBuilder {
         this.team[emptySlot] = adjustedPokemon;
         this.updateTeamDisplay();
         this.updateTypeCoverage();
+        this.updateStatsDisplay();
         this.saveToStorage();
         this.hideSearchResults();
         document.getElementById('pokemon-search').value = '';
@@ -419,6 +425,7 @@ class PokemonTeamBuilder {
         this.team[index] = null;
         this.updateTeamDisplay();
         this.updateTypeCoverage();
+        this.updateStatsDisplay();
         this.saveToStorage();
     }
 
@@ -526,6 +533,86 @@ class PokemonTeamBuilder {
             
             typeCoverageContainer.appendChild(coverageItem);
         });
+    }
+
+    updateStatsDisplay() {
+        const statsContainer = document.getElementById('stats-list');
+        const selectedStat = document.getElementById('stat-select').value;
+        const highestFirst = document.getElementById('stat-order-toggle').checked;
+        
+        // Get team Pokemon with stats
+        const teamWithStats = this.team
+            .filter(pokemon => pokemon !== null)
+            .map(pokemon => {
+                const statValue = this.getPokemonStatValue(pokemon, selectedStat);
+                return {
+                    pokemon,
+                    statValue
+                };
+            });
+        
+        // Sort by selected stat
+        teamWithStats.sort((a, b) => {
+            return highestFirst ? b.statValue - a.statValue : a.statValue - b.statValue;
+        });
+        
+        // Clear and populate stats list
+        statsContainer.innerHTML = '';
+        
+        if (teamWithStats.length === 0) {
+            statsContainer.innerHTML = '<div class="no-stats">Add Pokemon to your team to see stats comparison</div>';
+            return;
+        }
+        
+        teamWithStats.forEach((item, index) => {
+            const statRow = document.createElement('div');
+            statRow.className = 'stat-row';
+            
+            const rankClass = index === 0 ? 'rank-first' : index === teamWithStats.length - 1 ? 'rank-last' : 'rank-middle';
+            
+            statRow.innerHTML = `
+                <div class="stat-rank ${rankClass}">#${index + 1}</div>
+                <img src="${item.pokemon.sprites.front_default}" alt="${item.pokemon.name}" class="stat-pokemon-sprite">
+                <div class="stat-pokemon-info">
+                    <div class="stat-pokemon-name">${item.pokemon.name}</div>
+                    <div class="stat-pokemon-types">
+                        ${item.pokemon.types.map(type => 
+                            `<span class="type-badge type-${type.type.name}">${type.type.name}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="stat-value">${item.statValue}</div>
+            `;
+            
+            statsContainer.appendChild(statRow);
+        });
+    }
+    
+    getPokemonStatValue(pokemon, statName) {
+        if (!pokemon.stats) {
+            console.warn(`No stats found for Pokemon: ${pokemon.name}`);
+            return 0;
+        }
+        
+        const statMap = {
+            'hp': 'hp',
+            'attack': 'attack',
+            'defense': 'defense',
+            'special-attack': 'special-attack',
+            'special-defense': 'special-defense',
+            'speed': 'speed'
+        };
+        
+        const targetStatName = statMap[statName];
+        const stat = pokemon.stats.find(s => s.stat.name === targetStatName);
+        const value = stat ? stat.base_stat : 0;
+        
+        // Debug logging
+        if (value === 0) {
+            console.warn(`Stat ${statName} (${targetStatName}) not found for ${pokemon.name}. Available stats:`, pokemon.stats.map(s => s.stat.name));
+        }
+        
+        return value;
     }
 
     getTeamTypes() {
@@ -909,6 +996,7 @@ class PokemonTeamBuilder {
         // Refresh displays
         this.updateTeamDisplay();
         this.updateTypeCoverage();
+        this.updateStatsDisplay();
         this.saveToStorage();
         
         console.log(`Switched to Generation ${this.currentGeneration}`);
@@ -938,7 +1026,8 @@ class PokemonTeamBuilder {
                     id: pokemon.id,
                     name: pokemon.name,
                     sprites: pokemon.sprites,
-                    types: pokemon.types
+                    types: pokemon.types,
+                    stats: pokemon.stats
                 } : null),
                 generation: this.currentGeneration
             };
@@ -948,7 +1037,7 @@ class PokemonTeamBuilder {
         }
     }
 
-    loadFromStorage() {
+    async loadFromStorage() {
         try {
             const saved = localStorage.getItem('poketools-data');
             if (saved) {
@@ -962,17 +1051,26 @@ class PokemonTeamBuilder {
                 
                 // Restore team
                 if (data.team) {
-                    this.team = data.team.map(pokemon => {
+                    this.team = await Promise.all(data.team.map(async pokemon => {
                         if (!pokemon) return null;
+                        
+                        // If stats are missing, re-fetch the complete Pokemon data
+                        if (!pokemon.stats) {
+                            const completeData = await this.getPokemonData(pokemon.name);
+                            if (completeData) {
+                                pokemon = completeData;
+                            }
+                        }
                         
                         // Adjust types for current generation
                         return {
                             ...pokemon,
                             types: this.getPokemonTypesForGeneration(pokemon.name, pokemon.types)
                         };
-                    });
+                    }));
                     
                     this.updateTeamDisplay();
+                    this.updateStatsDisplay();
                 }
             }
         } catch (error) {
@@ -1004,6 +1102,7 @@ class PokemonTeamBuilder {
             // Update displays
             this.updateTeamDisplay();
             this.updateTypeCoverage();
+            this.updateStatsDisplay();
             
             // Clear battle recommendations
             document.getElementById('battle-recommendations').innerHTML = 

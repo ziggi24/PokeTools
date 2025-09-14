@@ -89,19 +89,20 @@
         <section class="stats-section">
             <h2><i class="fas fa-chart-bar"></i> Stats</h2>
             <div class="stats-controls">
-                <label for="stat-select">Compare by:</label>
-                <select id="stat-select">
-                    <option value="hp">HP</option>
-                    <option value="attack">Attack</option>
-                    <option value="defense">Defense</option>
-                    <option value="special-attack">Sp. Atk</option>
-                    <option value="special-defense">Sp. Def</option>
-                    <option value="speed" selected>Speed</option>
-                </select>
-                <label class="toggle">
-                    <input type="checkbox" id="stat-order-toggle" checked>
-                    <span>Show highest first</span>
-                </label>
+                <div>
+                    <label for="stat-select">Compare by:</label>
+                    <select id="stat-select">
+                        <option value="hp">HP</option>
+                        <option value="attack">Attack</option>
+                        <option value="defense">Defense</option>
+                        <option value="special-attack">Sp. Atk</option>
+                        <option value="special-defense">Sp. Def</option>
+                        <option value="speed" selected>Speed</option>
+                    </select>
+                </div>
+                 <label class="toggle">
+                    <input type="checkbox" id="stat-order-toggle" hidden checked>
+                </label>  
             </div>
             <div id="stats-list" class="stats-list">
                 <!-- Stats rows injected here -->
