@@ -1021,7 +1021,7 @@ class PokemonLookup {
             total += baseStat;
             
             html += `
-                <div class="stat-item">
+                <div class="stats-item">
                     <div class="stat-name">${statNames[statName] || statName}</div>
                     <div class="stat-value">${baseStat}</div>
                 </div>
@@ -1029,7 +1029,7 @@ class PokemonLookup {
         });
         
         html += `
-            <div class="stat-item total-stat">
+            <div class="stats-item total-stat">
                 <div class="stat-name">Total</div>
                 <div class="stat-value">${total}</div>
             </div>
