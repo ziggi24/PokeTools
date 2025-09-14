@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeTools - Pokemon Lookup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/lookup.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header with Navigation -->
+        <header class="app-header">
+            <div class="header-nav">
+                <h1><i class="fas fa-pokeball"></i> PokeTools</h1>
+                <div class="nav-buttons">
+                    <a href="index.html" class="nav-btn">
+                        <i class="fas fa-users"></i> Team Builder
+                    </a>
+                    <a href="lookup.html" class="nav-btn active">
+                        <i class="fas fa-search"></i> Pokemon Lookup
+                    </a>
+                </div>
+            </div>
+            <div class="generation-selector">
+                <select id="generation-select">
+                    <option value="1">Generation I (Red/Blue/Yellow)</option>
+                    <option value="2">Generation II (Gold/Silver/Crystal)</option>
+                    <option value="3">Generation III (Ruby/Sapphire/Emerald)</option>
+                    <option value="4">Generation IV (Diamond/Pearl/Platinum)</option>
+                    <option value="5">Generation V (Black/White)</option>
+                    <option value="6">Generation VI (X/Y)</option>
+                    <option value="7">Generation VII (Sun/Moon)</option>
+                    <option value="8">Generation VIII (Sword/Shield)</option>
+                    <option value="9" selected>Generation IX (Scarlet/Violet)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Pokemon Search -->
+        <section class="pokemon-search">
+            <div class="search-container">
+                <input type="text" id="pokemon-search" placeholder="Search for a Pokemon...">
+                <button id="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </section>
+
+        <!-- Pokemon Display -->
+        <div id="pokemon-display" class="pokemon-display hidden">
+            <!-- Pokemon Header -->
+            <section class="pokemon-header">
+                <div class="pokemon-title">
+                    <h1 id="pokemon-name">Pokemon Name</h1>
+                    <div id="pokemon-types" class="pokemon-types"></div>
+                </div>
+                <div class="pokemon-sprite-container">
+                    <img id="pokemon-sprite" src="" alt="Pokemon Sprite" class="main-pokemon-sprite">
+                </div>
+            </section>
+
+            <!-- Evolution Chain -->
+            <section class="evolution-section">
+                <h2><i class="fas fa-arrow-right"></i> Evolution Chain</h2>
+                <div id="evolution-chain" class="evolution-chain"></div>
+            </section>
+
+            <!-- Abilities -->
+            <section class="abilities-section">
+                <h2><i class="fas fa-star"></i> Abilities</h2>
+                <div id="abilities-list" class="abilities-list"></div>
+            </section>
+
+            <!-- Stats -->
+            <section class="stats-section">
+                <h2><i class="fas fa-chart-bar"></i> Base Stats</h2>
+                <div id="stats-display" class="stats-display"></div>
+            </section>
+
+            <!-- Type Effectiveness -->
+            <section class="type-effectiveness-section">
+                <h2><i class="fas fa-shield-alt"></i> Type Effectiveness</h2>
+                <div id="type-effectiveness" class="type-effectiveness-grid"></div>
+            </section>
+
+            <!-- Moves -->
+            <section class="moves-section">
+                <h2><i class="fas fa-fist-raised"></i> Moves</h2>
+                <div class="moves-tabs">
+                    <button class="move-tab active" data-tab="level-up">Level Up</button>
+                    <button class="move-tab" data-tab="tm-hm">TM/HM</button>
+                </div>
+                <div id="moves-display" class="moves-display">
+                    <div id="level-up-moves" class="move-list active"></div>
+                    <div id="tm-hm-moves" class="move-list"></div>
+                </div>
+            </section>
+
+            <!-- Location Data -->
+            <section class="location-section">
+                <h2><i class="fas fa-map-marker-alt"></i> Locations</h2>
+                <div id="location-display" class="location-display"></div>
+            </section>
+        </div>
+
+        <!-- Loading Overlay removed - now using progressive loading -->
+
+        <!-- No Pokemon Selected -->
+        <div id="no-pokemon" class="no-pokemon">
+            <div class="no-pokemon-content">
+                <i class="fas fa-search"></i>
+                <h2>Search for a Pokemon</h2>
+                <p>Use the search bar above to find detailed information about any Pokemon</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/lookup.js"></script>
+</body>
+</html>

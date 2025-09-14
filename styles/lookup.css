@@ -1,0 +1,1187 @@
+/* Pokemon Lookup - Specific Styles */
+
+/* Header navigation styles are inherited from main.css */
+
+/* Pokemon Display */
+.pokemon-display {
+    display: block;
+}
+
+.pokemon-display.hidden {
+    display: none;
+}
+
+/* No Pokemon State */
+.no-pokemon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.no-pokemon-content {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.no-pokemon-content i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: var(--border-color);
+}
+
+.no-pokemon-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Pokemon Header */
+.pokemon-header {
+    background: var(--surface-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+    margin: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pokemon-title h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    text-transform: capitalize;
+    color: var(--text-primary);
+}
+
+.pokemon-types {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.main-pokemon-sprite {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Evolution Chain */
+.evolution-chain {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-height: 200px;
+}
+
+.evolution-branches {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-left: 1rem;
+    position: relative;
+}
+
+.evolution-branches::before {
+    content: "";
+    position: absolute;
+    left: -0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+    border-radius: 1px;
+}
+
+.evolution-branch {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 80px;
+    position: relative;
+}
+
+.evolution-branch::before {
+    content: "";
+    position: absolute;
+    left: -1rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 2px;
+    background: var(--border-color);
+    transform: translateY(-50%);
+}
+
+.evolution-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 120px;
+    text-align: center;
+    flex-shrink: 0;
+    padding: 0.5rem;
+}
+
+.evolution-pokemon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--border-color);
+    padding: 0.5rem;
+    background: var(--surface-color);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 0.5rem;
+}
+
+.evolution-pokemon.current {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.evolution-pokemon:hover {
+    transform: scale(1.05);
+    border-color: var(--accent-color);
+}
+
+.evolution-pokemon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.evolution-name {
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: capitalize;
+    color: var(--text-primary);
+}
+
+.evolution-requirements {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    text-align: center;
+    line-height: 1.3;
+    max-width: 120px;
+    word-wrap: break-word;
+    padding: 0 0.25rem;
+}
+
+.evolution-level {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.evolution-arrow {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+}
+
+.evolution-branching-indicator {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    transform: rotate(90deg);
+}
+
+.evolution-connector {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+}
+
+/* Mobile Evolution Chain - Vertical Layout */
+@media (max-width: 600px) {
+    .evolution-chain {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+        min-height: auto;
+        overflow-x: visible;
+    }
+
+    .evolution-arrow {
+        transform: rotate(90deg);
+        margin: 0.5rem 0;
+    }
+
+    .evolution-branching-indicator {
+        transform: rotate(180deg);
+        margin: 0.5rem 0;
+    }
+
+    .evolution-connector {
+        transform: rotate(90deg);
+        margin: 0.5rem 0;
+    }
+
+    .evolution-stage {
+        min-width: auto;
+        width: 100%;
+        max-width: 150px;
+    }
+
+    .evolution-branches {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        margin-left: 0;
+        align-items: center;
+    }
+
+    .evolution-branches::before {
+        display: none;
+    }
+
+    .evolution-branch {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        min-height: auto;
+        gap: 0.5rem;
+    }
+
+    .evolution-branch::before {
+        display: none;
+    }
+
+    .evolution-branch .evolution-arrow {
+        margin: 0.5rem 0;
+    }
+
+    .evolution-branch .evolution-connector {
+        margin: 0.5rem 0;
+    }
+}
+
+/* Abilities */
+.abilities-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.ability-item {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ability-item:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.ability-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ability-hidden {
+    background: var(--accent-color);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.ability-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Stats Display */
+.stats-display {
+    background: var(--background-color);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    border: 2px solid var(--border-color);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+}
+
+.stat-item:last-child {
+    margin-bottom: 0;
+}
+
+.stat-item.total-stat {
+    border-top: 2px solid rgba(255, 255, 255, 0.3);
+    margin-top: 1rem;
+    padding-top: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: bold;
+}
+
+.stat-name {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.stat-value {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    text-align: right;
+}
+
+/* Stat bar styles removed - now using simplified layout */
+
+/* Type Effectiveness Grid */
+.type-effectiveness-section {
+    position: relative;
+}
+
+.type-effectiveness-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-style: italic;
+    text-align: center;
+}
+
+.type-effectiveness-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.effectiveness-group {
+    background: var(--background-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.effectiveness-group-title {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.effectiveness-group-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.effectiveness-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0;
+    text-align: center;
+    overflow: hidden;
+}
+
+.effectiveness-type {
+    font-weight: bold;
+    text-transform: capitalize;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    margin: 0 0 0.5rem 0;
+    color: white;
+}
+
+.effectiveness-multiplier {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    color: white;
+}
+
+.effectiveness-multiplier.immune {
+    background: #3b82f6;
+}
+
+.effectiveness-multiplier.quarter {
+    background: #059669;
+}
+
+.effectiveness-multiplier.half {
+    background: #10b981;
+}
+
+.effectiveness-multiplier.normal {
+    background: var(--text-secondary);
+}
+
+.effectiveness-multiplier.double {
+    background: #f59e0b;
+}
+
+.effectiveness-multiplier.quadruple {
+    background: #ef4444;
+}
+
+/* Type-specific backgrounds for effectiveness headers */
+.effectiveness-type.normal {
+    background: var(--type-normal);
+}
+.effectiveness-type.fire {
+    background: var(--type-fire);
+}
+.effectiveness-type.water {
+    background: var(--type-water);
+}
+.effectiveness-type.electric {
+    background: var(--type-electric);
+    color: black;
+}
+.effectiveness-type.grass {
+    background: var(--type-grass);
+}
+.effectiveness-type.ice {
+    background: var(--type-ice);
+    color: black;
+}
+.effectiveness-type.fighting {
+    background: var(--type-fighting);
+}
+.effectiveness-type.poison {
+    background: var(--type-poison);
+}
+.effectiveness-type.ground {
+    background: var(--type-ground);
+    color: black;
+}
+.effectiveness-type.flying {
+    background: var(--type-flying);
+}
+.effectiveness-type.psychic {
+    background: var(--type-psychic);
+}
+.effectiveness-type.bug {
+    background: var(--type-bug);
+}
+.effectiveness-type.rock {
+    background: var(--type-rock);
+}
+.effectiveness-type.ghost {
+    background: var(--type-ghost);
+}
+.effectiveness-type.dragon {
+    background: var(--type-dragon);
+}
+.effectiveness-type.dark {
+    background: var(--type-dark);
+}
+.effectiveness-type.steel {
+    background: var(--type-steel);
+    color: black;
+}
+.effectiveness-type.fairy {
+    background: var(--type-fairy);
+}
+
+/* Moves Section */
+.moves-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.move-tab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.move-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: bold;
+}
+
+.move-tab:hover {
+    color: var(--primary-color);
+}
+
+.move-list {
+    display: none;
+}
+
+.move-list.active {
+    display: block;
+}
+
+.move-item {
+    display: block;
+    padding: 0.75rem;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.move-card {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.move-card:hover {
+    background: rgba(74, 144, 226, 0.05);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.move-card:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.move-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    min-height: 2rem;
+}
+
+.move-name-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.move-name {
+    font-weight: bold;
+    text-transform: capitalize;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.move-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.move-pp {
+    font-size: 0.8rem;
+    text-align: right;
+    margin-left: auto;
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.move-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-item {
+    display: grid;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.move-effect {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-style: italic;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.move-level {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    min-width: fit-content;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    height: 1.5rem;
+    box-sizing: border-box;
+}
+
+.move-tm {
+    background: var(--accent-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    min-width: fit-content;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    height: 1.5rem;
+    box-sizing: border-box;
+}
+
+/* Responsive adjustments for move cards */
+@media (max-width: 600px) {
+    .move-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        min-height: auto;
+    }
+
+    .move-name-type {
+        width: 100%;
+    }
+
+    .move-meta {
+        align-self: flex-end;
+        margin-top: -1.5rem;
+    }
+
+    .move-stats {
+        gap: 0.75rem;
+    }
+
+    .stat-item {
+        font-size: 0.75rem;
+    }
+
+    .move-effect {
+        font-size: 0.75rem;
+    }
+}
+
+/* Location Display */
+.location-display {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.game-group {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.game-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    text-align: center;
+    padding: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 0.5rem;
+}
+
+.game-locations {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.location-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+}
+
+.location-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.location-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.location-method {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.location-chance {
+    background: var(--accent-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.location-level {
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.no-location {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
+}
+
+.no-location-with-link {
+    text-align: center;
+    padding: 1rem;
+}
+
+.bulbapedia-disclaimer {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.bulbapedia-disclaimer p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.bulbapedia-disclaimer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.bulbapedia-disclaimer a:hover {
+    text-decoration: underline;
+}
+
+.bulbapedia-disclaimer i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+.location-note {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-left: 0.5rem;
+}
+
+.location-chance {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.location-level {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.no-moves {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
+}
+
+/* Skeleton Loading Animations */
+.skeleton-loader {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+@keyframes skeleton-pulse {
+    0% {
+        background-color: #e2e8f0;
+    }
+    50% {
+        background-color: #cbd5e0;
+    }
+    100% {
+        background-color: #e2e8f0;
+    }
+}
+
+.skeleton-loader > * {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 0.375rem;
+    background-color: #e2e8f0;
+}
+
+/* Evolution Skeleton */
+.skeleton-evolution {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.skeleton-pokemon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+}
+
+.skeleton-name {
+    width: 60px;
+    height: 12px;
+    background-color: #e2e8f0;
+}
+
+.skeleton-requirements {
+    width: 80px;
+    height: 10px;
+    background-color: #e2e8f0;
+    margin-top: 0.25rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.skeleton-arrow {
+    width: 24px;
+    height: 24px;
+    background-color: #e2e8f0;
+    align-self: center;
+}
+
+/* Abilities Skeleton */
+.skeleton-ability {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-ability-name {
+    width: 120px;
+    height: 20px;
+    background-color: #e2e8f0;
+}
+
+.skeleton-ability-desc {
+    width: 100%;
+    height: 14px;
+    background-color: #e2e8f0;
+}
+
+.skeleton-ability-desc.short {
+    width: 70%;
+}
+
+/* Stats Skeleton */
+.skeleton-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-stat-name {
+    width: 80px;
+    height: 16px;
+    background-color: #e2e8f0;
+}
+
+.skeleton-stat-value {
+    width: 40px;
+    height: 20px;
+    background-color: #e2e8f0;
+}
+
+/* Type Effectiveness Skeleton */
+.skeleton-effectiveness-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-group-title {
+    width: 200px;
+    height: 20px;
+    background-color: #e2e8f0;
+    align-self: center;
+}
+
+.skeleton-effectiveness-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.skeleton-effectiveness-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-type-name {
+    width: 60px;
+    height: 16px;
+    background-color: #e2e8f0;
+    align-self: center;
+}
+
+.skeleton-multiplier {
+    width: 30px;
+    height: 20px;
+    background-color: #e2e8f0;
+    align-self: center;
+}
+
+/* Moves Skeleton */
+.skeleton-move {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-move-name {
+    width: 100px;
+    height: 16px;
+    background-color: #e2e8f0;
+}
+
+.skeleton-move-details {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.skeleton-move-tag {
+    width: 50px;
+    height: 20px;
+    background-color: #e2e8f0;
+    border-radius: 1rem;
+}
+
+.skeleton-move-level {
+    width: 40px;
+    height: 20px;
+    background-color: #e2e8f0;
+    border-radius: 1rem;
+}
+
+/* Locations Skeleton */
+.skeleton-game-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-game-title {
+    width: 100px;
+    height: 24px;
+    background-color: #e2e8f0;
+    align-self: center;
+    border-radius: 0.5rem;
+}
+
+.skeleton-location {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    background-color: transparent;
+    animation: none;
+}
+
+.skeleton-location-name {
+    width: 150px;
+    height: 16px;
+    background-color: #e2e8f0;
+}
+
+.skeleton-location-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.skeleton-tag {
+    width: 60px;
+    height: 20px;
+    background-color: #e2e8f0;
+    border-radius: 1rem;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+    .pokemon-header {
+        padding: 2rem;
+    }
+
+    .main-pokemon-sprite {
+        width: 220px;
+        height: 220px;
+    }
+
+    .pokemon-title h1 {
+        font-size: 2.5rem;
+    }
+
+    .abilities-list {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .type-effectiveness-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    /* Header navigation responsive styles are inherited from main.css */
+}
+
+@media (min-width: 1024px) {
+    .evolution-chain {
+        justify-content: center;
+    }
+
+    .abilities-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .type-effectiveness-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .pokemon-header {
+        max-width: 1000px;
+        margin: 1rem auto;
+    }
+
+    .abilities-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .type-effectiveness-grid {
+        grid-template-columns: repeat(9, 1fr);
+    }
+
+    section {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
