@@ -571,7 +571,7 @@ class PokemonTeamBuilder {
                 pokemon.types.forEach(pokemonType => {
                     const defenseType = pokemonType.type.name;
                     const incomingEffectiveness = this.getTypeEffectiveness(targetType, defenseType);
-                    console.log(`Type coverage: ${targetType} -> ${defenseType}: ${incomingEffectiveness}`); // Debug
+                    //console.log(`Type coverage: ${targetType} -> ${defenseType}: ${incomingEffectiveness}`); // Debug
                     
                     if (incomingEffectiveness === 0) {
                         hasImmunity = true;
@@ -678,7 +678,7 @@ class PokemonTeamBuilder {
         }
         
         // Fallback to 1 (normal effectiveness) if data not available
-        console.log(`FALLBACK: ${attackType} vs ${defenseType} = 1 (no data found)`);
+        //console.log(`FALLBACK: ${attackType} vs ${defenseType} = 1 (no data found)`);
         return 1;
     }
 
