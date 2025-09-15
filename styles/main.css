@@ -166,18 +166,63 @@ section h2 {
     margin-bottom: 1rem;
 }
 
-.search-container input {
+/* Search Input Wrapper for Clear Button */
+.search-input-wrapper {
+    position: relative;
     flex: 1;
-    padding: 0.75rem;
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem; /* Extra right padding for clear button */
     border: 2px solid var(--border-color);
     border-radius: 0.5rem;
     font-size: 1rem;
     transition: border-color 0.2s;
 }
 
-.search-container input:focus {
+.search-input-wrapper input:focus {
     outline: none;
     border-color: var(--primary-color);
+}
+
+/* Clear Button - More specific selector to override search-container button styles */
+.search-input-wrapper .clear-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f3f4f6 !important;
+    border: none;
+    color: #6b7280 !important;
+    cursor: pointer;
+    padding: 0.25rem !important;
+    border-radius: 50% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    transition: opacity 0.2s, visibility 0.2s, color 0.2s, background-color 0.2s;
+    opacity: 0;
+    visibility: hidden;
+    font-size: 0.75rem;
+}
+
+.search-input-wrapper .clear-btn:hover {
+    color: #4b5563 !important;
+    background-color: #e5e7eb !important;
+}
+
+.search-input-wrapper .clear-btn:active {
+    color: #374151 !important;
+    background-color: #d1d5db !important;
+}
+
+/* Show clear button when input has content */
+.search-input-wrapper.has-content .clear-btn {
+    opacity: 1;
+    visibility: visible;
 }
 
 .search-container button {
@@ -243,16 +288,16 @@ section h2 {
 }
 
 .type-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.8rem;
+    font-size: 0.65rem;
     font-weight: bold;
     color: white;
     text-transform: uppercase;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    height: 1.5rem;
+    gap: 0.2rem;
+    height: 1.3rem;
     box-sizing: border-box;
     line-height: 1.2;
 }
@@ -688,28 +733,26 @@ section h2 {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.stat-rank {
-    font-size: 1.25rem;
-    font-weight: bold;
+.stat-arrow {
+    font-size: 1.5rem;
     min-width: 40px;
     text-align: center;
     padding: 0.5rem;
-    border-radius: 50%;
-    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.stat-rank.rank-first {
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    color: #1f2937;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+.stat-arrow.arrow-up {
+    color: #22c55e;
 }
 
-.stat-rank.rank-middle {
-    background: var(--text-secondary);
+.stat-arrow.arrow-down {
+    color: #ef4444;
 }
 
-.stat-rank.rank-last {
-    background: var(--warning-color);
+.stat-arrow.arrow-neutral {
+    color: #6b7280;
 }
 
 .stat-pokemon-sprite {
@@ -742,7 +785,7 @@ section h2 {
 .stat-value {
     font-size: 1.5rem;
     font-weight: bold;
-    color: var(--primary-color);
+    color: var(--text-primary);
     min-width: 60px;
     text-align: right;
 }
@@ -766,13 +809,7 @@ section h2 {
     margin-bottom: 1rem;
 }
 
-.opponent-search input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid var(--border-color);
-    border-radius: 0.5rem;
-    font-size: 1rem;
-}
+/* Opponent search uses the same wrapper styling as other search inputs */
 
 .battle-recommendations {
     background: var(--background-color);

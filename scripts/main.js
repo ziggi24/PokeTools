@@ -18,15 +18,20 @@ class PokemonTeamBuilder {
         await this.loadFromStorage();
         this.updateTypeCoverage();
         this.updateStatsDisplay();
+        this.checkSearchInputsOnLoad();
     }
 
     bindEvents() {
         // Pokemon search
         document.getElementById('pokemon-search').addEventListener('input', this.debounce(this.searchPokemon.bind(this), 300));
+        document.getElementById('pokemon-search').addEventListener('input', this.handleSearchInputChange.bind(this));
         document.getElementById('add-pokemon-btn').addEventListener('click', this.handleAddPokemon.bind(this));
+        document.getElementById('pokemon-search-clear').addEventListener('click', this.clearPokemonSearch.bind(this));
 
         // Opponent search
         document.getElementById('opponent-search').addEventListener('input', this.debounce(this.searchOpponent.bind(this), 300));
+        document.getElementById('opponent-search').addEventListener('input', this.handleOpponentInputChange.bind(this));
+        document.getElementById('opponent-search-clear').addEventListener('click', this.clearOpponentSearch.bind(this));
 
         // Generation selector
         document.getElementById('generation-select').addEventListener('change', this.handleGenerationChange.bind(this));
@@ -49,6 +54,69 @@ class PokemonTeamBuilder {
                 this.hideSearchResults();
             }
         });
+    }
+
+    // Check for existing content in search inputs on page load
+    checkSearchInputsOnLoad() {
+        const pokemonInput = document.getElementById('pokemon-search');
+        const opponentInput = document.getElementById('opponent-search');
+        
+        
+        // Check Pokemon search input
+        if (pokemonInput && pokemonInput.value.trim()) {
+            const wrapper = pokemonInput.closest('.search-input-wrapper');
+            if (wrapper) {
+                wrapper.classList.add('has-content');
+            }
+        }
+        
+        // Check opponent search input
+        if (opponentInput && opponentInput.value.trim()) {
+            const wrapper = opponentInput.closest('.search-input-wrapper');
+            if (wrapper) {
+                wrapper.classList.add('has-content');
+            }
+        }
+    }
+
+    // Handle search input changes to show/hide clear buttons
+    handleSearchInputChange(e) {
+        const wrapper = e.target.closest('.search-input-wrapper');
+        if (e.target.value.trim()) {
+            wrapper.classList.add('has-content');
+        } else {
+            wrapper.classList.remove('has-content');
+        }
+    }
+
+    handleOpponentInputChange(e) {
+        const wrapper = e.target.closest('.search-input-wrapper');
+        if (e.target.value.trim()) {
+            wrapper.classList.add('has-content');
+        } else {
+            wrapper.classList.remove('has-content');
+        }
+    }
+
+    // Clear button handlers
+    clearPokemonSearch() {
+        const input = document.getElementById('pokemon-search');
+        const wrapper = input.closest('.search-input-wrapper');
+        input.value = '';
+        wrapper.classList.remove('has-content');
+        this.hideSearchResults();
+        input.focus();
+    }
+
+    clearOpponentSearch() {
+        const input = document.getElementById('opponent-search');
+        const wrapper = input.closest('.search-input-wrapper');
+        input.value = '';
+        wrapper.classList.remove('has-content');
+        this.hideOpponentResults();
+        // Clear battle recommendations
+        document.getElementById('battle-recommendations').innerHTML = '<p class="no-opponent">Select an opponent Pokemon to see battle recommendations</p>';
+        input.focus();
     }
 
     debounce(func, wait) {
@@ -539,6 +607,19 @@ class PokemonTeamBuilder {
         const statsContainer = document.getElementById('stats-list');
         const selectedStat = document.getElementById('stat-select').value;
         const highestFirst = document.getElementById('stat-order-toggle').checked;
+        const orderToggle = document.getElementById('stat-order-toggle').parentElement;
+        
+        // If "none" is selected, show suggestion text and hide order toggle
+        if (selectedStat === 'none') {
+            statsContainer.style.display = 'block';
+            statsContainer.innerHTML = '<div class="no-stats">Select a stat to see how your Pokemon compare</div>';
+            orderToggle.style.display = 'none';
+            return;
+        }
+        
+        // Show the stats list and order toggle
+        statsContainer.style.display = 'flex';
+        orderToggle.style.display = 'flex';
         
         // Get team Pokemon with stats
         const teamWithStats = this.team
@@ -568,10 +649,27 @@ class PokemonTeamBuilder {
             const statRow = document.createElement('div');
             statRow.className = 'stat-row';
             
-            const rankClass = index === 0 ? 'rank-first' : index === teamWithStats.length - 1 ? 'rank-last' : 'rank-middle';
+            // Determine arrow/dash type based on position and sort order
+            const totalPokemon = teamWithStats.length;
+            const isTopSection = index < Math.floor(totalPokemon / 3);
+            const isBottomSection = index >= totalPokemon - Math.floor(totalPokemon / 3);
+            const isMiddleSection = !isTopSection && !isBottomSection;
+            
+            let arrowClass, iconClass;
+            
+            if (isMiddleSection) {
+                arrowClass = 'arrow-neutral';
+                iconClass = 'fas fa-minus';
+            } else {
+                const showUpArrow = (highestFirst && isTopSection) || (!highestFirst && isBottomSection);
+                arrowClass = showUpArrow ? 'arrow-up' : 'arrow-down';
+                iconClass = `fas fa-arrow-${showUpArrow ? 'up' : 'down'}`;
+            }
             
             statRow.innerHTML = `
-                <div class="stat-rank ${rankClass}">#${index + 1}</div>
+                <div class="stat-arrow ${arrowClass}">
+                    <i class="${iconClass}"></i>
+                </div>
                 <img src="${item.pokemon.sprites.front_default}" alt="${item.pokemon.name}" class="stat-pokemon-sprite">
                 <div class="stat-pokemon-info">
                     <div class="stat-pokemon-name">${item.pokemon.name}</div>
@@ -589,6 +687,11 @@ class PokemonTeamBuilder {
     }
     
     getPokemonStatValue(pokemon, statName) {
+        // Handle "none" case
+        if (statName === 'none') {
+            return 0;
+        }
+        
         if (!pokemon.stats) {
             console.warn(`No stats found for Pokemon: ${pokemon.name}`);
             return 0;
@@ -608,7 +711,7 @@ class PokemonTeamBuilder {
         const value = stat ? stat.base_stat : 0;
         
         // Debug logging
-        if (value === 0) {
+        if (value === 0 && statName !== 'none') {
             console.warn(`Stat ${statName} (${targetStatName}) not found for ${pokemon.name}. Available stats:`, pokemon.stats.map(s => s.stat.name));
         }
         
@@ -784,6 +887,13 @@ class PokemonTeamBuilder {
         this.analyzeMatchup(adjustedOpponent);
         this.hideOpponentResults();
         document.getElementById('opponent-search').value = pokemonData.name;
+        
+        // Update clear button visibility after setting the value
+        const opponentInput = document.getElementById('opponent-search');
+        const wrapper = opponentInput.closest('.search-input-wrapper');
+        if (wrapper) {
+            wrapper.classList.add('has-content');
+        }
     }
 
     analyzeMatchup(opponentPokemon) {

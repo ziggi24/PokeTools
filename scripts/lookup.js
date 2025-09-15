@@ -25,7 +25,9 @@ class PokemonLookup {
     bindEvents() {
         // Search functionality
         document.getElementById('pokemon-search').addEventListener('input', this.debounce(this.searchPokemon.bind(this), 300));
+        document.getElementById('pokemon-search').addEventListener('input', this.handleSearchInputChange.bind(this));
         document.getElementById('search-btn').addEventListener('click', this.handleSearch.bind(this));
+        document.getElementById('pokemon-search-clear').addEventListener('click', this.clearPokemonSearch.bind(this));
 
         // Generation selector
         document.getElementById('generation-select').addEventListener('change', this.handleGenerationChange.bind(this));
@@ -34,6 +36,9 @@ class PokemonLookup {
         document.querySelectorAll('.move-tab').forEach(tab => {
             tab.addEventListener('click', this.handleMoveTab.bind(this));
         });
+
+        // Bulbapedia button
+        document.getElementById('bulbapedia-btn').addEventListener('click', this.handleBulbapediaClick.bind(this));
 
         // Click outside to close search results
         document.addEventListener('click', (e) => {
@@ -257,6 +262,14 @@ class PokemonLookup {
             
             this.hideSearchResults();
             document.getElementById('pokemon-search').value = pokemonData.name;
+            
+            // Update clear button visibility after setting the value
+            const pokemonInput = document.getElementById('pokemon-search');
+            const wrapper = pokemonInput.closest('.search-input-wrapper');
+            if (wrapper) {
+                wrapper.classList.add('has-content');
+            }
+            
             this.saveToStorage();
         } catch (error) {
             console.error('Error displaying Pokemon details:', error);
@@ -438,8 +451,13 @@ class PokemonLookup {
     }
 
     async displayPokemonHeader(pokemonData) {
-        // Handle regional forms in the display name
-        const displayName = this.formatPokemonName(pokemonData.name);
+        // Handle mega evolutions and regional forms in the display name
+        let displayName;
+        if (this.isMegaEvolution(pokemonData.name)) {
+            displayName = this.formatMegaEvolutionName(pokemonData.name);
+        } else {
+            displayName = this.formatPokemonName(pokemonData.name);
+        }
         document.getElementById('pokemon-name').textContent = displayName;
         
         // Use the best available sprite
@@ -457,10 +475,18 @@ class PokemonLookup {
         ).join('');
         typesContainer.innerHTML = typeIcons;
 
-        // Set background color based on primary type
+        // Set background gradient based on type(s)
         const primaryType = pokemonData.types[0].type.name;
         const headerSection = document.querySelector('.pokemon-header');
-        headerSection.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--surface-color))`;
+        
+        if (pokemonData.types.length === 2) {
+            // Dual-type: gradient between both type colors
+            const secondaryType = pokemonData.types[1].type.name;
+            headerSection.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--type-${secondaryType}))`;
+        } else {
+            // Single-type: gradient to surface color (existing behavior)
+            headerSection.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--surface-color))`;
+        }
     }
 
     async displayEvolutionChain(pokemonData) {
@@ -496,34 +522,139 @@ class PokemonLookup {
 
     async buildEvolutionChain(chain, currentPokemonName) {
         const evolutionTree = await this.buildEvolutionTree(chain, currentPokemonName);
+        // Post-process to fix any remaining Wormadam requirement issues
+        this.fixWormadamRequirements(evolutionTree);
         return this.renderEvolutionTree(evolutionTree);
+    }
+
+    fixWormadamRequirements(evolutionTree) {
+        if (!evolutionTree) return;
+        
+        // Fix requirements for the current node if it's a Wormadam form
+        if (evolutionTree.name && evolutionTree.name.includes('wormadam-')) {
+            const formName = this.getWormadamFormName(evolutionTree.name);
+            evolutionTree.requirements = `Female only, ${formName}`;
+        }
+        
+        // Recursively fix requirements for all evolutions
+        if (evolutionTree.evolutions) {
+            for (const evolution of evolutionTree.evolutions) {
+                this.fixWormadamRequirements(evolution);
+            }
+        }
+        
+        // Fix requirements for regional forms
+        if (evolutionTree.regionalForms) {
+            for (const form of evolutionTree.regionalForms) {
+                if (form.name && form.name.includes('wormadam-')) {
+                    const formName = this.getWormadamFormName(form.name);
+                    form.requirements = `Female only, ${formName}`;
+                }
+            }
+        }
     }
 
     async buildEvolutionTree(chain, currentPokemonName, depth = 0) {
         if (!chain) return null;
 
         const pokemonName = chain.species.name;
-        const pokemonData = await this.getPokemonData(pokemonName);
+        
+        // Check for regional forms and mega evolutions
+        const allForms = await this.getAllPokemonForms(pokemonName);
+        const evolutionDetails = this.selectEvolutionDetailsForGeneration(chain.evolution_details);
+        
+        // Determine if we should use regional form based on current Pokemon
+        const currentRegionalType = this.getRegionalType(currentPokemonName);
+        
+        // Choose the appropriate form: regional if current Pokemon is regional, otherwise main form
+        let pokemonData;
+        if (currentRegionalType) {
+            // Look for the matching regional form
+            const regionalForm = allForms.find(form => 
+                this.isRegionalForm(form.name) && 
+                this.getRegionalType(form.name) === currentRegionalType
+            );
+            
+            if (regionalForm) {
+                pokemonData = regionalForm;
+            } else {
+                // If no regional form found, try to fetch it directly
+                const regionalName = `${pokemonName}-${currentRegionalType}`;
+                try {
+                    const regionalPokemon = await this.getPokemonData(regionalName);
+                    if (regionalPokemon) {
+                        pokemonData = regionalPokemon;
+                    } else {
+                        pokemonData = allForms.find(form => !this.isRegionalForm(form.name) && !this.isMegaEvolution(form.name)) || allForms[0];
+                    }
+                } catch (error) {
+                    pokemonData = allForms.find(form => !this.isRegionalForm(form.name) && !this.isMegaEvolution(form.name)) || allForms[0];
+                }
+            }
+        } else {
+            // Use main form (not regional or mega)
+            pokemonData = allForms.find(form => !this.isRegionalForm(form.name) && !this.isMegaEvolution(form.name)) || allForms[0];
+        }
         
         if (!pokemonData) return null;
 
-        const isCurrentPokemon = pokemonName === currentPokemonName;
+        const isCurrentPokemon = this.isCurrentPokemonMatch(pokemonData.name, currentPokemonName);
+        let evolutionRequirements = this.getEvolutionRequirements(evolutionDetails);
         
-        // Select the most appropriate evolution details for current generation
-        const evolutionDetails = this.selectEvolutionDetailsForGeneration(chain.evolution_details);
-        
-        // Get evolution requirements for current generation
-        const evolutionRequirements = this.getEvolutionRequirements(evolutionDetails);
+        // Special handling for Wormadam forms - override generic requirements
+        if (pokemonData.name.includes('wormadam-')) {
+            const formName = this.getWormadamFormName(pokemonData.name);
+            evolutionRequirements = `Female only, ${formName}`;
+        }
 
         const node = {
-            name: pokemonName,
-            formattedName: this.formatPokemonName(pokemonName),
+            name: pokemonData.name,
+            formattedName: this.formatPokemonName(pokemonData.name),
             sprite: pokemonData.sprites.front_default,
             isCurrent: isCurrentPokemon,
             requirements: evolutionRequirements,
             depth: depth,
-            evolutions: []
+            evolutions: [],
+            regionalForms: [],
+            megaEvolutions: []
         };
+
+        // Only add regional forms as separate entries if we're NOT currently viewing a regional form
+        // (to avoid duplication - when viewing regional form, main chain shows regional sprites)
+        if (!currentRegionalType) {
+            const regionalForms = allForms.filter(form => this.isRegionalForm(form.name));
+            for (const form of regionalForms) {
+                node.regionalForms.push({
+                    name: form.name,
+                    formattedName: this.formatPokemonName(form.name),
+                    sprite: form.sprites.front_default,
+                    isCurrent: this.isCurrentPokemonMatch(form.name, currentPokemonName),
+                    requirements: this.getRegionalFormRequirements(form.name)
+                });
+            }
+        }
+
+        // Add mega evolutions only if this is a final evolution (no further evolutions)
+        // and the Pokemon can actually mega evolve
+        if (chain.evolves_to.length === 0) { // Final evolution stage
+            const megaEvolutions = allForms.filter(form => this.isMegaEvolution(form.name));
+            for (const mega of megaEvolutions) {
+                // Add mega evolutions as regular evolution nodes
+                const megaNode = {
+                    name: mega.name,
+                    formattedName: this.formatMegaEvolutionName(mega.name),
+                    sprite: mega.sprites.front_default,
+                    isCurrent: this.isCurrentPokemonMatch(mega.name, currentPokemonName),
+                    requirements: this.getMegaEvolutionRequirements(mega.name),
+                    depth: depth + 1,
+                    evolutions: [],
+                    regionalForms: [],
+                    megaEvolutions: [],
+                    isMegaEvolution: true
+                };
+                node.evolutions.push(megaNode);
+            }
+        }
 
         // Handle multiple evolution paths
         if (chain.evolves_to && chain.evolves_to.length > 0) {
@@ -533,6 +664,9 @@ class PokemonLookup {
                     node.evolutions.push(evolutionNode);
                 }
             }
+            
+            // Special handling for complex form-based evolutions like Burmy
+            await this.handleSpecialFormEvolutions(node, pokemonName, currentPokemonName, depth);
         }
 
         return node;
@@ -552,36 +686,209 @@ class PokemonLookup {
                 </div>
                 <div class="evolution-name">${tree.formattedName}</div>
                 ${tree.requirements ? `<div class="evolution-requirements">${tree.requirements}</div>` : ''}
+                
+                ${this.renderRegionalForms(tree.regionalForms)}
             </div>
         `;
 
         // Handle evolutions
         if (tree.evolutions.length > 0) {
-            if (tree.evolutions.length === 1) {
-                // Single evolution path - linear chain
-                html += '<div class="evolution-arrow"><i class="fas fa-arrow-right"></i></div>';
-                html += this.renderEvolutionTree(tree.evolutions[0]);
-            } else {
-                // Multiple evolution paths - branching
-                html += '<div class="evolution-branching-indicator"><i class="fas fa-code-branch"></i></div>';
-                html += '<div class="evolution-branches">';
-                
-                for (let i = 0; i < tree.evolutions.length; i++) {
-                    const evolution = tree.evolutions[i];
+            // Separate mega evolutions from regular evolutions
+            const regularEvolutions = tree.evolutions.filter(evo => !evo.isMegaEvolution);
+            const megaEvolutions = tree.evolutions.filter(evo => evo.isMegaEvolution);
+            
+            // Handle regular evolutions first
+            if (regularEvolutions.length > 0) {
+                if (regularEvolutions.length === 1) {
+                    // Single evolution path - linear chain
+                    html += '<div class="evolution-arrow"><i class="fas fa-arrow-right"></i></div>';
+                    html += this.renderEvolutionTree(regularEvolutions[0]);
+                } else {
+                    // Multiple evolution paths - branching
+                    html += '<div class="evolution-branching-indicator"><i class="fas fa-code-branch"></i></div>';
+                    html += '<div class="evolution-branches">';
                     
-                    html += `
-                        <div class="evolution-branch">
-                            <div class="evolution-connector"><i class="fas fa-minus"></i></div>
-                            ${this.renderEvolutionTree(evolution)}
-                        </div>
-                    `;
+                    for (let i = 0; i < regularEvolutions.length; i++) {
+                        const evolution = regularEvolutions[i];
+                        
+                        html += `
+                            <div class="evolution-branch">
+                                <div class="evolution-connector"><i class="fas fa-minus"></i></div>
+                                ${this.renderEvolutionTree(evolution)}
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
                 }
-                
-                html += '</div>';
+            }
+            
+            // Handle mega evolutions
+            if (megaEvolutions.length > 0) {
+                if (megaEvolutions.length === 1) {
+                    // Single mega evolution
+                    html += '<div class="mega-evolution-arrow">';
+                    html += '<img src="https://archives.bulbagarden.net/media/upload/b/bb/Tretta_Mega_Evolution_icon.png" alt="Mega Evolution" class="mega-evolution-symbol">';
+                    html += '</div>';
+                    html += this.renderEvolutionTree(megaEvolutions[0]);
+                } else {
+                    // Multiple mega evolutions
+                    html += '<div class="mega-evolution-branching-indicator">';
+                    html += '<img src="https://archives.bulbagarden.net/media/upload/b/bb/Tretta_Mega_Evolution_icon.png" alt="Mega Evolution" class="mega-evolution-symbol">';
+                    html += '</div>';
+                    html += '<div class="mega-evolution-branches">';
+                    
+                    for (let i = 0; i < megaEvolutions.length; i++) {
+                        const megaEvolution = megaEvolutions[i];
+                        
+                        html += `
+                            <div class="mega-evolution-branch">
+                                <div class="mega-evolution-connector"><i class="fas fa-minus"></i></div>
+                                ${this.renderEvolutionTree(megaEvolution)}
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
             }
         }
 
         return html;
+    }
+
+    renderRegionalForms(regionalForms) {
+        if (!regionalForms || regionalForms.length === 0) return '';
+
+        let html = '<div class="regional-forms">';
+        for (const form of regionalForms) {
+            html += `
+                <div class="regional-form">
+                    <div class="evolution-connector-regional"><i class="fas fa-globe"></i></div>
+                    <div class="evolution-pokemon ${form.isCurrent ? 'current' : ''}" 
+                         data-pokemon-name="${form.name}">
+                        <img src="${form.sprite}" alt="${form.name}">
+                    </div>
+                    <div class="evolution-name">${form.formattedName}</div>
+                    <div class="evolution-requirements">${form.requirements}</div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // renderMegaEvolutions method removed - mega evolutions now handled inline
+
+    async handleSpecialFormEvolutions(node, pokemonName, currentPokemonName, depth) {
+        // Handle Pokemon with complex form-based and gender-based evolutions
+        if (pokemonName === 'burmy' || pokemonName.includes('wormadam-') || pokemonName === 'mothim') {
+            await this.handleBurmyEvolutionFamily(node, currentPokemonName, depth);
+        }
+        // Handle other complex evolution cases
+        // Add more special cases here as needed:
+        // if (pokemonName === 'nidoran-f' || pokemonName === 'nidoran-m') {
+        //     await this.handleNidoranEvolution(node, currentPokemonName, depth);
+        // }
+        // if (pokemonName === 'kirlia') {
+        //     await this.handleKirliaEvolution(node, currentPokemonName, depth);
+        // }
+    }
+
+    async handleBurmyEvolutionFamily(node, currentPokemonName, depth) {
+        try {
+            // Get Wormadam forms for female Burmy evolution
+            const wormadamForms = await this.getAllPokemonForms('wormadam');
+            
+            // All forms should be the different cloak variants
+            const formVariants = wormadamForms.filter(form => 
+                form.name.includes('wormadam-') || form.name === 'wormadam'
+            );
+            
+            // Find existing evolutions
+            const wormadamIndex = node.evolutions.findIndex(evo => evo.name === 'wormadam' || evo.name.includes('wormadam'));
+            
+            // Remove any existing generic Wormadam evolution
+            if (wormadamIndex !== -1) {
+                node.evolutions.splice(wormadamIndex, 1);
+            }
+            
+            // Add specific Wormadam form evolutions
+            for (const form of formVariants) {
+                const formName = this.getWormadamFormName(form.name);
+                const requirements = `Female only, ${formName}`;
+                
+                const formNode = {
+                    name: form.name,
+                    formattedName: this.formatWormadamFormName(form.name),
+                    sprite: form.sprites.front_default,
+                    isCurrent: this.isCurrentPokemonMatch(form.name, currentPokemonName),
+                    requirements: requirements,
+                    depth: depth + 1,
+                    evolutions: [],
+                    regionalForms: [],
+                    megaEvolutions: []
+                };
+                
+                node.evolutions.push(formNode);
+            }
+            
+            // Also fix any existing Wormadam forms that might already be in the evolution chain
+            // This handles the case where we're viewing a Wormadam form and it shows up in its own evolution tree
+            for (const evolution of node.evolutions) {
+                if (evolution.name.includes('wormadam-')) {
+                    const formName = this.getWormadamFormName(evolution.name);
+                    evolution.requirements = `Female only, ${formName}`;
+                }
+            }
+            
+            // Find Mothim AFTER we've modified the evolutions array
+            const mothimIndex = node.evolutions.findIndex(evo => evo.name === 'mothim');
+            
+            // Ensure Mothim has proper gender requirements (add it if it doesn't exist)
+            if (mothimIndex !== -1) {
+                node.evolutions[mothimIndex].requirements = 'Male only, Level 20';
+            } else {
+                // Add Mothim evolution if it's missing from the evolution chain
+                try {
+                    const mothimData = await this.getPokemonData('mothim');
+                    if (mothimData) {
+                        const mothimNode = {
+                            name: 'mothim',
+                            formattedName: 'Mothim',
+                            sprite: mothimData.sprites.front_default,
+                            isCurrent: this.isCurrentPokemonMatch('mothim', currentPokemonName),
+                            requirements: 'Male only, Level 20',
+                            depth: depth + 1,
+                            evolutions: [],
+                            regionalForms: [],
+                            megaEvolutions: []
+                        };
+                        node.evolutions.push(mothimNode);
+                    }
+                } catch (error) {
+                    console.debug('Could not fetch Mothim data:', error);
+                }
+            }
+            
+        } catch (error) {
+            console.warn('Error handling Burmy evolution:', error);
+        }
+    }
+
+    getWormadamFormName(pokemonName) {
+        if (pokemonName.includes('plant')) return 'Plant Cloak';
+        if (pokemonName.includes('sandy')) return 'Sandy Cloak';
+        if (pokemonName.includes('trash')) return 'Trash Cloak';
+        return 'Plant Cloak'; // Default
+    }
+
+    formatWormadamFormName(pokemonName) {
+        if (pokemonName.includes('plant')) return 'Wormadam (Plant)';
+        if (pokemonName.includes('sandy')) return 'Wormadam (Sandy)';
+        if (pokemonName.includes('trash')) return 'Wormadam (Trash)';
+        if (pokemonName === 'wormadam') return 'Wormadam (Plant)';
+        return this.formatPokemonName(pokemonName);
     }
 
     selectEvolutionDetailsForGeneration(evolutionDetailsArray) {
@@ -805,6 +1112,169 @@ class PokemonLookup {
         return filteredRequirements.join(', ');
     }
 
+    async getAllPokemonForms(pokemonName) {
+        try {
+            // Handle special cases where the base form doesn't exist
+            if (pokemonName === 'wormadam') {
+                return await this.getWormadamForms();
+            }
+            
+            // Get the main Pokemon first
+            const mainPokemon = await this.getPokemonData(pokemonName);
+            if (!mainPokemon) {
+                // If main form doesn't exist, try to handle special form-only Pokemon
+                return await this.handleFormOnlyPokemon(pokemonName);
+            }
+
+            const forms = [mainPokemon];
+
+            // Get species data to find all varieties
+            const speciesData = await this.getPokemonSpecies(mainPokemon.species.url);
+            if (speciesData && speciesData.varieties) {
+                for (const variety of speciesData.varieties) {
+                    // Skip the default variety as we already have it
+                    if (variety.is_default) continue;
+                    
+                    try {
+                        const variantPokemon = await this.getPokemonData(variety.pokemon.name);
+                        if (variantPokemon) {
+                            forms.push(variantPokemon);
+                        }
+                    } catch (error) {
+                        // Silent fail for unavailable varieties
+                        console.debug(`Variety ${variety.pokemon.name} not available:`, error);
+                    }
+                }
+            }
+
+            return forms;
+        } catch (error) {
+            console.error(`Error getting forms for ${pokemonName}:`, error);
+            // Try to handle special form-only Pokemon as fallback
+            const fallbackForms = await this.handleFormOnlyPokemon(pokemonName);
+            return fallbackForms.length > 0 ? fallbackForms : [];
+        }
+    }
+
+    async getWormadamForms() {
+        const wormadamForms = [];
+        const formNames = ['wormadam-plant', 'wormadam-sandy', 'wormadam-trash'];
+        
+        for (const formName of formNames) {
+            try {
+                const formData = await this.getPokemonData(formName);
+                if (formData) {
+                    wormadamForms.push(formData);
+                }
+            } catch (error) {
+                console.debug(`Could not fetch ${formName}:`, error);
+            }
+        }
+        
+        return wormadamForms;
+    }
+
+    async handleFormOnlyPokemon(pokemonName) {
+        // Define Pokemon that only exist in specific forms (no base form)
+        const formOnlyPokemon = {
+            'wormadam': ['wormadam-plant', 'wormadam-sandy', 'wormadam-trash'],
+            // Add other form-only Pokemon here as needed
+            // 'rotom': ['rotom-heat', 'rotom-wash', 'rotom-frost', 'rotom-fan', 'rotom-mow'],
+            // 'shaymin': ['shaymin-land', 'shaymin-sky'],
+            // etc.
+        };
+
+        if (formOnlyPokemon[pokemonName]) {
+            const forms = [];
+            for (const formName of formOnlyPokemon[pokemonName]) {
+                try {
+                    const formData = await this.getPokemonData(formName);
+                    if (formData) {
+                        forms.push(formData);
+                    }
+                } catch (error) {
+                    console.debug(`Could not fetch ${formName}:`, error);
+                }
+            }
+            return forms;
+        }
+
+        return [];
+    }
+
+    isRegionalForm(pokemonName) {
+        return pokemonName.includes('-alola') || 
+               pokemonName.includes('-galar') || 
+               pokemonName.includes('-hisui') || 
+               pokemonName.includes('-paldea') ||
+               pokemonName.endsWith('-alolan') ||
+               pokemonName.endsWith('-galarian') ||
+               pokemonName.endsWith('-hisuian') ||
+               pokemonName.endsWith('-paldean');
+    }
+
+    isMegaEvolution(pokemonName) {
+        return pokemonName.includes('-mega');
+    }
+
+    isCurrentPokemonMatch(pokemonName, currentPokemonName) {
+        // Exact match for the selected Pokemon
+        return pokemonName === currentPokemonName.toLowerCase();
+    }
+
+    getRegionalType(pokemonName) {
+        if (pokemonName.includes('-alola') || pokemonName.endsWith('-alolan')) {
+            return 'alola';
+        } else if (pokemonName.includes('-galar') || pokemonName.endsWith('-galarian')) {
+            return 'galar';
+        } else if (pokemonName.includes('-hisui') || pokemonName.endsWith('-hisuian')) {
+            return 'hisui';
+        } else if (pokemonName.includes('-paldea') || pokemonName.endsWith('-paldean')) {
+            return 'paldea';
+        }
+        return null;
+    }
+
+    getRegionalFormRequirements(pokemonName) {
+        if (pokemonName.includes('-alola') || pokemonName.endsWith('-alolan')) {
+            return 'Alolan Form';
+        } else if (pokemonName.includes('-galar') || pokemonName.endsWith('-galarian')) {
+            return 'Galarian Form';
+        } else if (pokemonName.includes('-hisui') || pokemonName.endsWith('-hisuian')) {
+            return 'Hisuian Form';
+        } else if (pokemonName.includes('-paldea') || pokemonName.endsWith('-paldean')) {
+            return 'Paldean Form';
+        }
+        return 'Regional Variant';
+    }
+
+    getMegaEvolutionRequirements(pokemonName) {
+        const baseName = pokemonName.replace('-mega', '').replace('-x', '').replace('-y', '');
+        
+        if (pokemonName.includes('-mega-x')) {
+            return `${this.formatPokemonName(baseName)}ite X`;
+        } else if (pokemonName.includes('-mega-y')) {
+            return `${this.formatPokemonName(baseName)}ite Y`;
+        } else if (pokemonName.includes('-mega')) {
+            return `${this.formatPokemonName(baseName)}ite`;
+        }
+        return 'Mega Stone';
+    }
+
+    formatMegaEvolutionName(pokemonName) {
+        const baseName = pokemonName.replace('-mega', '').replace('-x', '').replace('-y', '');
+        const formattedBaseName = this.formatPokemonName(baseName);
+        
+        if (pokemonName.includes('-mega-x')) {
+            return `Mega ${formattedBaseName} X`;
+        } else if (pokemonName.includes('-mega-y')) {
+            return `Mega ${formattedBaseName} Y`;
+        } else if (pokemonName.includes('-mega')) {
+            return `Mega ${formattedBaseName}`;
+        }
+        return this.formatPokemonName(pokemonName);
+    }
+
     formatItemName(itemName) {
         return itemName.split('-').map(word => this.capitalizeFirst(word)).join(' ');
     }
@@ -999,9 +1469,17 @@ class PokemonLookup {
         const container = document.getElementById('stats-display');
         const primaryType = pokemonData.types[0].type.name;
         
-        // Set background color based on primary type
-        container.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--background-color))`;
-        container.style.border = `2px solid var(--type-${primaryType})`;
+        // Set background gradient based on type(s)
+        if (pokemonData.types.length === 2) {
+            // Dual-type: gradient between both type colors
+            const secondaryType = pokemonData.types[1].type.name;
+            container.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--type-${secondaryType}))`;
+            container.style.border = `2px solid var(--type-${primaryType})`;
+        } else {
+            // Single-type: gradient to background color (existing behavior)
+            container.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--background-color))`;
+            container.style.border = `2px solid var(--type-${primaryType})`;
+        }
         
         const statNames = {
             'hp': 'HP',
@@ -1267,12 +1745,18 @@ class PokemonLookup {
                 effectText = effectText.substring(0, maxEffectLength) + '...';
             }
             
+            // Get move category and style
+            const categoryClass = `move-category-${move.category}`;
+            const categoryText = move.category === 'physical' ? 'Physical' : 
+                                move.category === 'special' ? 'Special' : 'Status';
+            
             html += `
                 <a href="${bulbapediaUrl}" target="_blank" rel="noopener noreferrer" class="move-item move-card">
                     <div class="move-header">
                         <div class="move-name-type">
                             <span class="move-name">${displayName}</span>
                             <span class="type-badge type-${move.type}">${move.type}</span>
+                            <span class="move-category ${categoryClass}">${categoryText}</span>
                             <span class="move-pp">PP: ${move.pp}</span>
                             <div class="move-${type}">
                                 ${type === 'level' ? `Lv. ${move.level}` : 'TM/HM'}
@@ -1314,16 +1798,7 @@ class PokemonLookup {
             console.log('Current generation:', this.currentGeneration);
             
             if (locations.length === 0) {
-                console.log('No locations found in API response, trying Bulbapedia');
-                
-                // Try to get location data from Bulbapedia
-                const bulbapediaResult = await this.getBulbapediaLocationData(pokemonData.name, this.currentGeneration);
-                
-                if (bulbapediaResult && bulbapediaResult.locations && bulbapediaResult.locations.length > 0) {
-                    console.log('Using Bulbapedia location data:', bulbapediaResult);
-                    this.displayBulbapediaLocations(container, bulbapediaResult.locations, pokemonData.name, bulbapediaResult.gameNames);
-                    return;
-                }
+                console.log('No locations found in API response');
                 
                 // Show no encounters message with Bulbapedia link
                 this.displayNoEncounters(container, pokemonData.name);
@@ -1468,65 +1943,10 @@ class PokemonLookup {
         }
     }
 
-    async getBulbapediaLocationData(pokemonName, generation) {
-        try {
-            // Format Pokemon name for Bulbapedia (capitalize first letter)
-            const formattedName = this.formatPokemonNameForBulbapedia(pokemonName);
-            
-            // Get the page content from Bulbapedia
-            const pageContent = await this.fetchBulbapediaPage(formattedName);
-            
-            if (!pageContent) {
-                console.log('No Bulbapedia page found for', formattedName);
-                return null;
-            }
-            
-            // Parse the page content for location data
-            const locationData = this.parseBulbapediaLocationData(pageContent, generation);
-            
-            return locationData;
-            
-        } catch (error) {
-            console.error('Error fetching Bulbapedia location data:', error);
-            return null;
-        }
-    }
+    // Removed Bulbapedia API methods due to CORS issues
+    // getBulbapediaLocationData method removed
 
-    async fetchBulbapediaPage(pokemonName) {
-        try {
-            // Use MediaWiki API to get page content
-            const url = `https://bulbapedia.bulbagarden.net/w/api.php?action=query&format=json&titles=${encodeURIComponent(pokemonName)}_(Pokémon)&prop=revisions&rvprop=content&origin=*`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            const pages = data.query.pages;
-            const pageId = Object.keys(pages)[0];
-            
-            if (pageId === '-1') {
-                // Page not found, try without "(Pokémon)" suffix
-                const fallbackUrl = `https://bulbapedia.bulbagarden.net/w/api.php?action=query&format=json&titles=${encodeURIComponent(pokemonName)}&prop=revisions&rvprop=content&origin=*`;
-                
-                const fallbackResponse = await fetch(fallbackUrl);
-                const fallbackData = await fallbackResponse.json();
-                
-                const fallbackPages = fallbackData.query.pages;
-                const fallbackPageId = Object.keys(fallbackPages)[0];
-                
-                if (fallbackPageId === '-1') {
-                    return null;
-                }
-                
-                return fallbackPages[fallbackPageId].revisions[0]['*'];
-            }
-            
-            return pages[pageId].revisions[0]['*'];
-            
-        } catch (error) {
-            console.error('Error fetching Bulbapedia page:', error);
-            return null;
-        }
-    }
+    // fetchBulbapediaPage method removed due to CORS issues
 
     parseBulbapediaLocationData(pageContent, generation) {
         try {
@@ -2612,6 +3032,45 @@ class PokemonLookup {
         }
     }
 
+    // Check for existing content in search input on page load
+    checkSearchInputOnLoad() {
+        const pokemonInput = document.getElementById('pokemon-search');
+        
+        
+        // Check Pokemon search input
+        if (pokemonInput && pokemonInput.value.trim()) {
+            const wrapper = pokemonInput.closest('.search-input-wrapper');
+            if (wrapper) {
+                wrapper.classList.add('has-content');
+            }
+        }
+    }
+
+    // Handle search input changes to show/hide clear button
+    handleSearchInputChange(e) {
+        const wrapper = e.target.closest('.search-input-wrapper');
+        if (e.target.value.trim()) {
+            wrapper.classList.add('has-content');
+        } else {
+            wrapper.classList.remove('has-content');
+        }
+    }
+
+    // Clear button handler
+    clearPokemonSearch() {
+        const input = document.getElementById('pokemon-search');
+        const wrapper = input.closest('.search-input-wrapper');
+        input.value = '';
+        wrapper.classList.remove('has-content');
+        this.hideSearchResults();
+        // Clear current Pokemon selection
+        document.getElementById('pokemon-display').classList.add('hidden');
+        document.getElementById('no-pokemon').style.display = 'flex';
+        this.currentPokemon = null;
+        this.saveToStorage();
+        input.focus();
+    }
+
     handleGenerationChange(event) {
         this.currentGeneration = parseInt(event.target.value);
         
@@ -2651,6 +3110,18 @@ class PokemonLookup {
         window.open(url, '_blank');
     }
 
+    handleBulbapediaClick() {
+        if (this.currentPokemon) {
+            this.openBulbapedia(this.currentPokemon.name);
+        }
+    }
+
+    openBulbapedia(pokemonName) {
+        const formattedName = this.formatPokemonNameForBulbapedia(pokemonName);
+        const url = `https://bulbapedia.bulbagarden.net/wiki/${encodeURIComponent(formattedName)}_(Pokémon)`;
+        window.open(url, '_blank');
+    }
+
     // Storage methods
     saveToStorage() {
         try {
@@ -2685,8 +3156,13 @@ class PokemonLookup {
                     this.getPokemonData(data.currentPokemon.name).then(pokemonData => {
                         if (pokemonData) {
                             this.selectPokemon(pokemonData);
+                            // Check search inputs after Pokemon is selected and search field is populated
+                            setTimeout(() => this.checkSearchInputOnLoad(), 100);
                         }
                     });
+                } else {
+                    // If no current Pokemon, check immediately
+                    this.checkSearchInputOnLoad();
                 }
             }
         } catch (error) {

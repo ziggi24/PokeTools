@@ -48,6 +48,35 @@
     margin: 1rem;
     border-radius: 1rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.pokemon-header .bulbapedia-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: background-color 0.2s, transform 0.2s;
+    z-index: 10;
+}
+
+.pokemon-header .bulbapedia-btn:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
+.pokemon-header .bulbapedia-btn:active {
+    transform: translateY(0);
 }
 
 .pokemon-title h1 {
@@ -73,7 +102,7 @@
 /* Evolution Chain */
 .evolution-chain {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 1rem;
     padding: 1rem 0;
     justify-content: flex-start;
@@ -95,8 +124,9 @@
     content: "";
     position: absolute;
     left: -0.5rem;
-    top: 0;
-    bottom: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(100% - 80px);
     width: 2px;
     background: var(--border-color);
     border-radius: 1px;
@@ -113,12 +143,18 @@
 .evolution-branch::before {
     content: "";
     position: absolute;
-    left: -1rem;
+    left: -0.5rem;
     top: 50%;
     width: 0.5rem;
     height: 2px;
     background: var(--border-color);
     transform: translateY(-50%);
+}
+
+.evolution-branch:only-child::before {
+    background: var(--border-color);
+    border: none;
+    border-radius: 0;
 }
 
 .evolution-stage {
@@ -141,6 +177,9 @@
     cursor: pointer;
     transition: all 0.2s;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .evolution-pokemon.current {
@@ -192,6 +231,7 @@
     align-items: center;
     justify-content: center;
     min-width: 30px;
+    height: 80px;
 }
 
 .evolution-branching-indicator {
@@ -202,6 +242,7 @@
     align-items: center;
     justify-content: center;
     min-width: 30px;
+    height: 80px;
     transform: rotate(90deg);
 }
 
@@ -213,13 +254,121 @@
     align-items: center;
     justify-content: center;
     min-width: 20px;
+    height: 80px;
+}
+
+/* Regional Forms */
+.regional-forms {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.regional-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--background-color);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    min-width: 200px;
+    margin: 0.25rem 0;
+}
+
+.evolution-connector-regional {
+    font-size: 1rem;
+    color: var(--accent-color);
+    margin-right: 0.5rem;
+}
+
+.regional-form .evolution-pokemon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0;
+}
+
+.regional-form .evolution-name {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.regional-form .evolution-requirements {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Mega Evolution Inline Styling */
+.mega-evolution-arrow,
+.mega-evolution-branching-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 80px;
+}
+
+.mega-evolution-symbol {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.mega-evolution-branches {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.mega-evolution-branches::before {
+    content: "";
+    position: absolute;
+    left: -0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(100% - 80px);
+    width: 2px;
+    background: var(--border-color);
+    border-radius: 1px;
+}
+
+.mega-evolution-branch {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 80px;
+    position: relative;
+}
+
+.mega-evolution-branch::before {
+    content: "";
+    position: absolute;
+    left: -0.5rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 2px;
+    background: var(--border-color);
+    transform: translateY(-50%);
+}
+
+.mega-evolution-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 80px;
 }
 
 /* Mobile Evolution Chain - Vertical Layout */
 @media (max-width: 600px) {
     .evolution-chain {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.5rem;
         align-items: center;
         min-height: auto;
         overflow-x: visible;
@@ -227,17 +376,20 @@
 
     .evolution-arrow {
         transform: rotate(90deg);
-        margin: 0.5rem 0;
+        margin: 0.25rem 0;
+        height: 40px;
     }
 
     .evolution-branching-indicator {
         transform: rotate(180deg);
-        margin: 0.5rem 0;
+        margin: 0.25rem 0;
+        height: 40px;
     }
 
     .evolution-connector {
         transform: rotate(90deg);
-        margin: 0.5rem 0;
+        margin: 0.25rem 0;
+        height: 30px;
     }
 
     .evolution-stage {
@@ -248,7 +400,7 @@
 
     .evolution-branches {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.5rem;
         width: 100%;
         margin-left: 0;
         align-items: center;
@@ -276,6 +428,61 @@
 
     .evolution-branch .evolution-connector {
         margin: 0.5rem 0;
+    }
+
+    .regional-forms {
+        margin-top: 1rem;
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .regional-form {
+        min-width: auto;
+        width: 100%;
+        max-width: 300px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .evolution-connector-regional {
+        margin: 0.5rem 0;
+        align-self: center;
+    }
+
+    .regional-form .evolution-pokemon {
+        width: 50px;
+        height: 50px;
+        align-self: center;
+    }
+
+    .mega-evolution-arrow,
+    .mega-evolution-branching-indicator {
+        margin: 0.25rem 0;
+        height: 40px;
+    }
+
+    .mega-evolution-symbol {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mega-evolution-branches {
+        width: 100%;
+        align-items: center;
+    }
+
+    .mega-evolution-branch {
+        flex-direction: column;
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+
+    .mega-evolution-branch::before {
+        display: none;
+    }
+
+    .mega-evolution-branches::before {
+        display: none;
     }
 }
 
@@ -694,6 +901,37 @@
     align-items: center;
     height: 1.5rem;
     box-sizing: border-box;
+}
+
+.move-category {
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.8rem;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    min-width: fit-content;
+    color: white;
+    flex-shrink: 0;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    height: 1.3rem;
+    box-sizing: border-box;
+}
+
+.move-category-physical {
+    background-color: #ef4444;
+    color: white;
+}
+
+.move-category-special {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.move-category-status {
+    background-color: #6b7280;
+    color: white;
 }
 
 /* Responsive adjustments for move cards */
@@ -1163,6 +1401,22 @@
 @media (min-width: 1024px) {
     .evolution-chain {
         justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .evolution-arrow {
+        height: 100px;
+        margin: 0 1rem;
+    }
+
+    .evolution-branching-indicator {
+        height: 100px;
+        margin: 0 1rem;
+    }
+
+    .evolution-connector {
+        height: 100px;
     }
 
     .abilities-list {

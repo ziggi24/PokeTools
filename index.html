@@ -40,7 +40,12 @@
         <!-- Pokemon Search -->
         <section class="pokemon-search">
             <div class="search-container">
-                <input type="text" id="pokemon-search" placeholder="Search Pokemon...">
+                <div class="search-input-wrapper">
+                    <input type="text" id="pokemon-search" placeholder="Search Pokemon...">
+                    <button class="clear-btn" id="pokemon-search-clear" type="button" aria-label="Clear search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <button id="add-pokemon-btn"><i class="fas fa-plus"></i></button>
             </div>
             <div id="search-results" class="search-results"></div>
@@ -92,16 +97,18 @@
                 <div>
                     <label for="stat-select">Compare by:</label>
                     <select id="stat-select">
+                        <option value="none" selected>None</option>
                         <option value="hp">HP</option>
                         <option value="attack">Attack</option>
                         <option value="defense">Defense</option>
                         <option value="special-attack">Sp. Atk</option>
                         <option value="special-defense">Sp. Def</option>
-                        <option value="speed" selected>Speed</option>
+                        <option value="speed">Speed</option>
                     </select>
                 </div>
-                 <label class="toggle">
-                    <input type="checkbox" id="stat-order-toggle" hidden checked>
+                <label class="toggle">
+                    <input type="checkbox" id="stat-order-toggle" checked>
+                    <span>Show highest first</span>
                 </label>  
             </div>
             <div id="stats-list" class="stats-list">
@@ -113,7 +120,12 @@
         <section class="battle-section">
             <h2><i class="fas fa-fist-raised"></i> Battle Analysis</h2>
             <div class="opponent-search">
-                <input type="text" id="opponent-search" placeholder="Search opponent Pokemon...">
+                <div class="search-input-wrapper">
+                    <input type="text" id="opponent-search" placeholder="Search opponent Pokemon...">
+                    <button class="clear-btn" id="opponent-search-clear" type="button" aria-label="Clear search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <div id="opponent-results" class="search-results"></div>
             </div>
             <div id="battle-recommendations" class="battle-recommendations">
