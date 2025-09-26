@@ -89,7 +89,16 @@
             <!-- Type Effectiveness -->
             <section class="type-effectiveness-section">
                 <h2><i class="fas fa-shield-alt"></i> Type Effectiveness</h2>
-                <div id="type-effectiveness" class="type-effectiveness-grid"></div>
+                <div class="effectiveness-tabs">
+                    <button class="effectiveness-tab active" data-tab="defense">Defense</button>
+                    <button class="effectiveness-tab" data-tab="offense">Offense</button>
+                </div>
+                <div id="defense-effectiveness" class="effectiveness-content active">
+                    <div id="type-effectiveness" class="type-effectiveness-grid"></div>
+                </div>
+                <div id="offense-effectiveness" class="effectiveness-content">
+                    <div id="offense-type-effectiveness" class="type-effectiveness-grid"></div>
+                </div>
             </section>
 
             <!-- Moves -->

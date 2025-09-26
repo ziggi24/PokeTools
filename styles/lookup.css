@@ -593,6 +593,234 @@
     position: relative;
 }
 
+/* Effectiveness Tabs */
+.effectiveness-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.effectiveness-tab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.effectiveness-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: bold;
+}
+
+.effectiveness-tab:hover {
+    color: var(--primary-color);
+}
+
+.effectiveness-content {
+    display: none;
+}
+
+.effectiveness-content.active {
+    display: block;
+}
+
+/* Offensive Type Sections */
+.offense-type-section {
+    margin-bottom: 2rem;
+    border: 2px solid var(--border-color);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.offense-type-title {
+    background: transparent;
+    padding: 1.5rem;
+    margin: 0;
+    text-align: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.offense-type-section .type-badge {
+    display: inline;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-transform: capitalize;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+/* Type badges in offense sections have no background - text only */
+
+/* Type-specific backgrounds for offense sections */
+.offense-type-section.offense-type-normal {
+    background: linear-gradient(
+        135deg,
+        var(--type-normal) 0%,
+        rgba(168, 168, 120, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-fire {
+    background: linear-gradient(
+        135deg,
+        var(--type-fire) 0%,
+        rgba(240, 128, 48, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-water {
+    background: linear-gradient(
+        135deg,
+        var(--type-water) 0%,
+        rgba(104, 144, 240, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-electric {
+    background: linear-gradient(
+        135deg,
+        var(--type-electric) 0%,
+        rgba(248, 208, 48, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-grass {
+    background: linear-gradient(
+        135deg,
+        var(--type-grass) 0%,
+        rgba(120, 200, 80, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-ice {
+    background: linear-gradient(
+        135deg,
+        var(--type-ice) 0%,
+        rgba(120, 200, 200, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-fighting {
+    background: linear-gradient(
+        135deg,
+        var(--type-fighting) 0%,
+        rgba(192, 48, 40, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-poison {
+    background: linear-gradient(
+        135deg,
+        var(--type-poison) 0%,
+        rgba(160, 64, 160, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-ground {
+    background: linear-gradient(
+        135deg,
+        var(--type-ground) 0%,
+        rgba(224, 192, 104, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-flying {
+    background: linear-gradient(
+        135deg,
+        var(--type-flying) 0%,
+        rgba(168, 144, 240, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-psychic {
+    background: linear-gradient(
+        135deg,
+        var(--type-psychic) 0%,
+        rgba(248, 88, 136, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-bug {
+    background: linear-gradient(
+        135deg,
+        var(--type-bug) 0%,
+        rgba(168, 184, 32, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-rock {
+    background: linear-gradient(
+        135deg,
+        var(--type-rock) 0%,
+        rgba(184, 160, 56, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-ghost {
+    background: linear-gradient(
+        135deg,
+        var(--type-ghost) 0%,
+        rgba(112, 88, 152, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-dragon {
+    background: linear-gradient(
+        135deg,
+        var(--type-dragon) 0%,
+        rgba(112, 56, 248, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-dark {
+    background: linear-gradient(
+        135deg,
+        var(--type-dark) 0%,
+        rgba(112, 88, 72, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-steel {
+    background: linear-gradient(
+        135deg,
+        var(--type-steel) 0%,
+        rgba(184, 184, 208, 0.1) 100%
+    );
+}
+
+.offense-type-section.offense-type-fairy {
+    background: linear-gradient(
+        135deg,
+        var(--type-fairy) 0%,
+        rgba(238, 153, 172, 0.1) 100%
+    );
+}
+
+.offense-type-groups {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.offense-type-groups .effectiveness-group {
+    margin-bottom: 1rem;
+}
+
+.offense-type-groups .effectiveness-group:last-child {
+    margin-bottom: 0;
+}
+
 .type-effectiveness-subtitle {
     font-size: 0.9rem;
     color: var(--text-secondary);

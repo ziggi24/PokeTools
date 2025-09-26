@@ -37,6 +37,11 @@ class PokemonLookup {
             tab.addEventListener('click', this.handleMoveTab.bind(this));
         });
 
+        // Effectiveness tabs
+        document.querySelectorAll('.effectiveness-tab').forEach(tab => {
+            tab.addEventListener('click', this.handleEffectivenessTab.bind(this));
+        });
+
         // Bulbapedia button
         document.getElementById('bulbapedia-btn').addEventListener('click', this.handleBulbapediaClick.bind(this));
 
@@ -241,6 +246,7 @@ class PokemonLookup {
     async selectPokemon(pokemonData) {
         try {
             this.currentPokemon = pokemonData;
+            this.currentPokemonData = pokemonData;
             
             // Show the pokemon display container immediately
             document.getElementById('no-pokemon').style.display = 'none';
@@ -289,6 +295,9 @@ class PokemonLookup {
             
             // Display type effectiveness (instant calculation)
             this.displayTypeEffectiveness(adjustedPokemon);
+            
+            // Ensure defense tab is active by default
+            this.resetEffectivenessTabs();
             
             // Load moves (can be slower due to multiple API calls)
             await this.displayMoves(adjustedPokemon);
@@ -1536,11 +1545,12 @@ class PokemonLookup {
         
         // Add subtitle
         const section = container.closest('.type-effectiveness-section');
-        let subtitle = section.querySelector('.type-effectiveness-subtitle');
+        let subtitle = section.querySelector('#defense-effectiveness .type-effectiveness-subtitle');
         if (!subtitle) {
             subtitle = document.createElement('div');
             subtitle.className = 'type-effectiveness-subtitle';
-            section.insertBefore(subtitle, container);
+            const defenseContent = section.querySelector('#defense-effectiveness');
+            defenseContent.insertBefore(subtitle, container);
         }
         subtitle.textContent = `Under normal conditions in Generation ${this.toRoman(this.currentGeneration)}, this Pokemon will take modified damage from the following types:`;
         
@@ -1608,6 +1618,91 @@ class PokemonLookup {
                 
                 html += `</div></div>`;
             }
+        });
+        
+        container.innerHTML = html;
+    }
+
+    displayOffensiveTypeEffectiveness(pokemonData) {
+        const container = document.getElementById('offense-type-effectiveness');
+        const allTypes = this.getGenerationTypes();
+        
+        // Add subtitle
+        const section = container.closest('.type-effectiveness-section');
+        let subtitle = section.querySelector('#offense-effectiveness .type-effectiveness-subtitle');
+        if (!subtitle) {
+            subtitle = document.createElement('div');
+            subtitle.className = 'type-effectiveness-subtitle';
+            const offenseContent = section.querySelector('#offense-effectiveness');
+            offenseContent.insertBefore(subtitle, container);
+        }
+        subtitle.textContent = `Under normal conditions in Generation ${this.toRoman(this.currentGeneration)}, this Pokemon's types will deal modified damage to the following types:`;
+        
+        let html = '';
+        
+        // Generate a section for each of the Pokemon's types
+        pokemonData.types.forEach((pokemonType, index) => {
+            const typeName = pokemonType.type.name;
+            
+            // Calculate offensive effectiveness for this type against all other types
+            const groups = {
+                superEffective: [],  // 2x or 4x (though single type can only do 2x max)
+                normal: [],          // 1x
+                notVeryEffective: [], // 0.5x or 0.25x (though single type can only do 0.5x max)
+                noEffect: []         // 0x
+            };
+            
+            allTypes.forEach(defendingType => {
+                const effectiveness = this.getTypeEffectiveness(typeName, defendingType);
+                
+                if (effectiveness === 0) {
+                    groups.noEffect.push({ type: defendingType, multiplier: effectiveness, text: '0×', class: 'immune' });
+                } else if (effectiveness > 1) {
+                    groups.superEffective.push({ type: defendingType, multiplier: effectiveness, text: '2×', class: 'double' });
+                } else if (effectiveness < 1) {
+                    groups.notVeryEffective.push({ type: defendingType, multiplier: effectiveness, text: '½×', class: 'half' });
+                } else {
+                    groups.normal.push({ type: defendingType, multiplier: effectiveness, text: '1×', class: 'normal' });
+                }
+            });
+            
+            // Create a section for this type
+            html += `<div class="offense-type-section offense-type-${typeName}">
+                <h3 class="offense-type-title">
+                    <span class="type-badge ${typeName}">${typeName.charAt(0).toUpperCase() + typeName.slice(1)} Type Attacks</span>
+                </h3>
+                <div class="offense-type-groups">`;
+            
+            // Display groups in order: super effective, normal, not very effective, no effect
+            const groupOrder = ['superEffective', 'normal', 'notVeryEffective', 'noEffect'];
+            const groupTitles = {
+                superEffective: 'Super Effective Against (Deals 2× damage)',
+                normal: 'Normal Effectiveness (Deals 1× damage)',
+                notVeryEffective: 'Not Very Effective Against (Deals ½× damage)',
+                noEffect: 'No Effect Against (Deals 0× damage)'
+            };
+            
+            groupOrder.forEach(groupName => {
+                const group = groups[groupName];
+                if (group.length > 0) {
+                    html += `<div class="effectiveness-group">
+                        <h4 class="effectiveness-group-title">${groupTitles[groupName]}</h4>
+                        <div class="effectiveness-group-items">`;
+                    
+                    group.forEach(item => {
+                        html += `
+                            <div class="effectiveness-item">
+                                <div class="effectiveness-type ${item.type}">${item.type}</div>
+                                <div class="effectiveness-multiplier ${item.class}" style="padding: 0.75rem;">${item.text}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div></div>`;
+                }
+            });
+            
+            html += `</div></div>`;
         });
         
         container.innerHTML = html;
@@ -3096,6 +3191,56 @@ class PokemonLookup {
             list.classList.remove('active');
         });
         document.getElementById(`${tabName}-moves`).classList.add('active');
+    }
+
+    handleEffectivenessTab(event) {
+        const tabName = event.target.dataset.tab;
+        
+        // Update tab buttons
+        document.querySelectorAll('.effectiveness-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Update effectiveness content
+        document.querySelectorAll('.effectiveness-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-effectiveness`).classList.add('active');
+        
+        // If switching to offense tab and it's empty, populate it
+        if (tabName === 'offense' && this.currentPokemonData) {
+            const offenseContainer = document.getElementById('offense-type-effectiveness');
+            if (!offenseContainer.innerHTML.trim()) {
+                this.displayOffensiveTypeEffectiveness(this.currentPokemonData);
+            }
+        }
+    }
+
+    resetEffectivenessTabs() {
+        // Reset all tabs to ensure defense is active
+        document.querySelectorAll('.effectiveness-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        const defenseTab = document.querySelector('.effectiveness-tab[data-tab="defense"]');
+        if (defenseTab) {
+            defenseTab.classList.add('active');
+        }
+        
+        // Reset all content areas
+        document.querySelectorAll('.effectiveness-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        const defenseContent = document.getElementById('defense-effectiveness');
+        if (defenseContent) {
+            defenseContent.classList.add('active');
+        }
+        
+        // Clear offense content to reset state
+        const offenseContainer = document.getElementById('offense-type-effectiveness');
+        if (offenseContainer) {
+            offenseContainer.innerHTML = '';
+        }
     }
 
     hideSearchResults() {
