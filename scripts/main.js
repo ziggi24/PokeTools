@@ -567,18 +567,15 @@ class PokemonTeamBuilder {
                         
                         return `
                             <div class="coverage-pokemon-item">
-                                
-                                <div class="coverage-pokemon-info">
-                                    <div class="coverage-pokemon-left">
+                                <div class="coverage-pokemon-left">
                                     <img src="${p.sprites.front_default}" alt="${p.name}" class="coverage-pokemon-icon">
-                                        <div class="coverage-pokemon-name">${p.name}</div>
-                                    </div>
-                                    <div class="coverage-pokemon-right">
-                                        ${mainReasons.length > 0 ? 
-                                            `<div class="coverage-pokemon-reasons">${mainReasons.join('\n')}</div>` : 
-                                            '<div class="coverage-pokemon-reasons">No specific matchups</div>'
-                                        }
-                                    </div>
+                                    <div class="coverage-pokemon-name">${p.name}</div>
+                                </div>
+                                <div class="coverage-pokemon-right">
+                                    ${mainReasons.length > 0 ? 
+                                        `<div class="coverage-pokemon-reasons">${mainReasons.join('\n')}</div>` : 
+                                        '<div class="coverage-pokemon-reasons">No specific matchups</div>'
+                                    }
                                 </div>
                             </div>
                         `;
@@ -594,7 +591,6 @@ class PokemonTeamBuilder {
                              onerror="this.style.display='none'">
                         <div class="type-name">${type}</div>
                     </div>
-                    <div class="coverage-status coverage-${coverage.effectiveness}">${coverage.label}</div>
                 </div>
                 ${pokemonDetails}
             `;
