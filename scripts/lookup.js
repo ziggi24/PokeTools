@@ -469,12 +469,26 @@ class PokemonLookup {
         }
         document.getElementById('pokemon-name').textContent = displayName;
         
-        // Use the best available sprite
-        const sprite = pokemonData.sprites.front_default || 
-                      pokemonData.sprites.other?.['official-artwork']?.front_default ||
-                      pokemonData.sprites.front_shiny;
-        document.getElementById('pokemon-sprite').src = sprite;
-        document.getElementById('pokemon-sprite').alt = displayName;
+        // Store both regular and shiny sprites for toggling
+        const regularSprite = pokemonData.sprites.front_default || 
+                            pokemonData.sprites.other?.['official-artwork']?.front_default ||
+                            pokemonData.sprites.front_shiny;
+        const shinySprite = pokemonData.sprites.front_shiny || 
+                           pokemonData.sprites.other?.['official-artwork']?.front_shiny ||
+                           pokemonData.sprites.front_default;
+        
+        // Store sprites in pokemon data for later use
+        pokemonData.regularSprite = regularSprite;
+        pokemonData.shinySprite = shinySprite;
+        pokemonData.isShiny = false; // Track current state
+        
+        // Set initial sprite
+        const spriteElement = document.getElementById('pokemon-sprite');
+        spriteElement.src = regularSprite;
+        spriteElement.alt = displayName;
+        
+        // Add click handler for sprite toggling
+        spriteElement.onclick = () => this.togglePokemonSprite(pokemonData);
 
         const typesContainer = document.getElementById('pokemon-types');
         const typeIcons = pokemonData.types.map(type => 
@@ -495,6 +509,20 @@ class PokemonLookup {
         } else {
             // Single-type: gradient to surface color (existing behavior)
             headerSection.style.background = `linear-gradient(135deg, var(--type-${primaryType}), var(--surface-color))`;
+        }
+    }
+
+    togglePokemonSprite(pokemonData) {
+        const spriteElement = document.getElementById('pokemon-sprite');
+        
+        // Toggle the shiny state
+        pokemonData.isShiny = !pokemonData.isShiny;
+        
+        // Update the sprite source
+        if (pokemonData.isShiny) {
+            spriteElement.src = pokemonData.shinySprite;
+        } else {
+            spriteElement.src = pokemonData.regularSprite;
         }
     }
 
