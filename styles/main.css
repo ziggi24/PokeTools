@@ -593,12 +593,12 @@ section h2 {
 }
 
 .coverage-pokemon-icon {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    max-width: 48px;
-    max-height: 48px;
+    width: 55px;
+    height: 55px;
+    min-width: 55px;
+    min-height: 55px;
+    max-width: 55px;
+    max-height: 55px;
     object-fit: contain;
     border-radius: 50%;
     border: 1px solid var(--border-color);
@@ -939,12 +939,6 @@ section h2 {
     }
 
     .coverage-pokemon-icon {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        min-height: 40px;
-        max-width: 40px;
-        max-height: 40px;
     }
 
     .coverage-pokemon-left {
@@ -1013,12 +1007,6 @@ section h2 {
     }
 
     .coverage-pokemon-icon {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        max-width: 36px;
-        max-height: 36px;
     }
 
     .coverage-pokemon-left {
@@ -1050,12 +1038,6 @@ section h2 {
     }
 
     .coverage-pokemon-icon {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        min-height: 40px;
-        max-width: 40px;
-        max-height: 40px;
     }
 
     .coverage-pokemon-left {
@@ -1080,12 +1062,6 @@ section h2 {
     }
 
     .coverage-pokemon-icon {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
-        max-width: 44px;
-        max-height: 44px;
     }
 
     .coverage-pokemon-left {
