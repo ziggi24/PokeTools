@@ -608,7 +608,10 @@ class PokemonLookup {
         if (!pokemonData) return null;
 
         const isCurrentPokemon = this.isCurrentPokemonMatch(pokemonData.name, currentPokemonName);
-        let evolutionRequirements = this.getEvolutionRequirements(evolutionDetails);
+        
+        // Evolution requirements should be empty for the current Pokemon
+        // They will be attached to the evolution arrows/branches instead
+        let evolutionRequirements = '';
         
         // Special handling for Wormadam forms - override generic requirements
         if (pokemonData.name.includes('wormadam-')) {
@@ -625,7 +628,8 @@ class PokemonLookup {
             depth: depth,
             evolutions: [],
             regionalForms: [],
-            megaEvolutions: []
+            megaEvolutions: [],
+            chainData: chain // Store the chain data for accessing evolution details
         };
 
         // Only add regional forms as separate entries if we're NOT currently viewing a regional form
@@ -694,7 +698,6 @@ class PokemonLookup {
                     <img src="${tree.sprite}" alt="${tree.name}">
                 </div>
                 <div class="evolution-name">${tree.formattedName}</div>
-                ${tree.requirements ? `<div class="evolution-requirements">${tree.requirements}</div>` : ''}
                 
                 ${this.renderRegionalForms(tree.regionalForms)}
             </div>
@@ -710,8 +713,17 @@ class PokemonLookup {
             if (regularEvolutions.length > 0) {
                 if (regularEvolutions.length === 1) {
                     // Single evolution path - linear chain
-                    html += '<div class="evolution-arrow"><i class="fas fa-arrow-right"></i></div>';
-                    html += this.renderEvolutionTree(regularEvolutions[0]);
+                    const evolution = regularEvolutions[0];
+                    const evolutionRequirements = this.getEvolutionRequirementsForEvolution(tree, evolution);
+                    if (evolutionRequirements) {
+                        html += `<div class="evolution-arrow"><i class="fas fa-arrow-right"></i><div class="evolution-requirements-between">${evolutionRequirements}</div></div>`;
+                    }
+                    else {
+                        html += '<div class="evolution-arrow"><i class="fas fa-arrow-right"></i></div>';
+
+                    }                    
+
+                    html += this.renderEvolutionTree(evolution);
                 } else {
                     // Multiple evolution paths - branching
                     html += '<div class="evolution-branching-indicator"><i class="fas fa-code-branch"></i></div>';
@@ -719,10 +731,13 @@ class PokemonLookup {
                     
                     for (let i = 0; i < regularEvolutions.length; i++) {
                         const evolution = regularEvolutions[i];
+                        // Get the evolution requirements for this specific evolution
+                        const evolutionRequirements = this.getEvolutionRequirementsForEvolution(tree, evolution);
                         
                         html += `
                             <div class="evolution-branch">
-                                <div class="evolution-connector"><i class="fas fa-minus"></i></div>
+                                <div class="evolution-connector"><i class="fas fa-arrow-right"></i></div>
+                                ${evolutionRequirements ? `<div class="evolution-requirements-branch">${evolutionRequirements}</div>` : ''}
                                 ${this.renderEvolutionTree(evolution)}
                             </div>
                         `;
@@ -991,7 +1006,7 @@ class PokemonLookup {
         return bestDetails;
     }
 
-    getEvolutionRequirements(evolutionDetails) {
+    getEvolutionRequirements(evolutionDetails, currentPokemonName = '') {
         if (!evolutionDetails) return '';
         
         const requirements = [];
@@ -1074,6 +1089,12 @@ class PokemonLookup {
         if (evolutionDetails.trade_species) {
             const speciesName = this.formatPokemonName(evolutionDetails.trade_species.name);
             requirements.push(`Trade for ${speciesName}`);
+        }
+        
+        // Check for special move-based evolution requirements not covered by PokeAPI
+        const specialMoveRequirements = this.getSpecialMoveEvolutionRequirements(evolutionDetails, currentPokemonName);
+        if (specialMoveRequirements) {
+            requirements.push(specialMoveRequirements);
         }
         
         // Trigger-specific requirements
@@ -1294,6 +1315,49 @@ class PokemonLookup {
 
     formatMoveName(moveName) {
         return moveName.split('-').map(word => this.capitalizeFirst(word)).join(' ');
+    }
+
+    getEvolutionRequirementsForEvolution(parentNode, evolutionNode) {
+        // Get the evolution details for this specific evolution
+        // We need to find the evolution details that correspond to this evolution
+        if (!parentNode.chainData || !parentNode.chainData.evolves_to) {
+            return '';
+        }
+        
+        // Find the evolution details for this specific evolution
+        const evolutionDetails = parentNode.chainData.evolves_to.find(evo => 
+            evo.species.name === evolutionNode.name
+        );
+        
+        if (!evolutionDetails) {
+            return '';
+        }
+        
+        // Get the appropriate evolution details for the current generation
+        const selectedDetails = this.selectEvolutionDetailsForGeneration(evolutionDetails.evolution_details);
+        
+        // Get the requirements using the parent Pokemon's name (the one that evolves)
+        return this.getEvolutionRequirements(selectedDetails, parentNode.name);
+    }
+
+    getSpecialMoveEvolutionRequirements(evolutionDetails, currentPokemonName) {
+        // Handle special move-based evolution requirements not covered by PokeAPI
+        // These are hardcoded for known cases where PokeAPI data is incomplete
+        
+        // Annihilape evolution from Primeape
+        if (currentPokemonName === 'primeape' && evolutionDetails?.trigger?.name === 'other') {
+            return 'Use Rage Fist 20 times, then level up';
+        }
+        
+        // Gholdengo evolution from Gimmighoul
+        if (currentPokemonName === 'gimmighoul' && evolutionDetails?.trigger?.name === 'other') {
+            return 'Collect 999 Gimmighoul Coins, then level up';
+        }
+        
+        // Add more special cases as needed
+        // Example: Other move-based evolutions that PokeAPI doesn't properly document
+        
+        return null;
     }
 
     filterEvolutionByGeneration(requirements, evolutionDetails) {
