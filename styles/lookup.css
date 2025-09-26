@@ -105,10 +105,11 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem 0;
-    justify-content: flex-start;
+    justify-content: space-between;
     flex-wrap: nowrap;
     overflow-x: auto;
     min-height: 200px;
+    width: 100%;
 }
 
 .evolution-branches {
@@ -223,16 +224,24 @@
     color: var(--text-secondary);
     text-align: center;
     line-height: 1.3;
-    max-width: 120px;
+    width: 100%;
     word-wrap: break-word;
-    padding: 0 0.25rem;
+    padding: 0 0.5rem;
     margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 30px;
     height: auto;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: normal;
+    box-sizing: border-box;
 }
+
+/* This is handled in the main mobile section below */
 
 /* Evolution requirements for branching evolutions */
 .evolution-requirements-branch {
@@ -271,7 +280,12 @@
     min-width: 30px;
     height: 80px;
     gap: 0.25rem;
+    position: relative;
+    flex: 1;
+    max-width: 200px;
 }
+
+/* This is handled in the main mobile section below */
 
 .evolution-branching-indicator {
     font-size: 1.2rem;
@@ -414,9 +428,31 @@
     }
 
     .evolution-arrow {
-        transform: rotate(90deg);
         margin: 0.25rem 0;
-        height: 40px;
+        height: auto;
+        min-height: 40px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .evolution-arrow i {
+        transform: rotate(90deg);
+        flex-shrink: 0;
+    }
+
+    .evolution-requirements-between {
+        width: auto;
+        max-width: 150px;
+        font-size: 0.6rem;
+        text-align: left;
+        position: static;
+        transform: none;
+        white-space: normal;
+        padding: 0 0.5rem;
+        margin-left: 0.5rem;
+        flex: 1;
     }
 
     .evolution-branching-indicator {
@@ -1667,7 +1703,7 @@
 
 @media (min-width: 1024px) {
     .evolution-chain {
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         gap: 1.5rem;
     }
@@ -1692,6 +1728,13 @@
         height: auto;
         margin: 0;
         font-size: 0.8rem;
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: normal;
+        width: 100%;
+        padding: 0 0.5rem;
     }
 
     .evolution-requirements-branch {
