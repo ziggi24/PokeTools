@@ -45,6 +45,9 @@ class PokemonLookup {
         // Bulbapedia button
         document.getElementById('bulbapedia-btn').addEventListener('click', this.handleBulbapediaClick.bind(this));
 
+        // Random Pokemon button
+        document.getElementById('random-pokemon-btn').addEventListener('click', this.getRandomPokemon.bind(this));
+
         // Click outside to close search results
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.pokemon-search')) {
@@ -3404,6 +3407,32 @@ class PokemonLookup {
             }
         } catch (error) {
             console.error('Failed to load from localStorage:', error);
+        }
+    }
+
+    async getRandomPokemon() {
+        try {
+            // Generate random number between 1 and 1301
+            const randomId = Math.floor(Math.random() * 1301) + 1;
+            
+            // Fetch Pokemon data by ID
+            const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch Pokemon with ID ${randomId}`);
+            }
+            
+            const pokemonData = await response.json();
+            
+            // Cache the Pokemon data
+            this.pokemonCache.set(pokemonData.name, pokemonData);
+            
+            // Select the random Pokemon
+            await this.selectPokemon(pokemonData);
+            
+        } catch (error) {
+            console.error('Error getting random Pokemon:', error);
+            // Show error message to user
+            alert('Failed to get random Pokemon. Please try again.');
         }
     }
 }
