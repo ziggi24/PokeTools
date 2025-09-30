@@ -3412,8 +3412,8 @@ class PokemonLookup {
 
     async getRandomPokemon() {
         try {
-            // Generate random number between 1 and 1301
-            const randomId = Math.floor(Math.random() * 1301) + 1;
+            // Generate random number between 1 and 1024
+            const randomId = Math.floor(Math.random() * 1024) + 1;
             
             // Fetch Pokemon data by ID
             const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
