@@ -20,6 +20,53 @@ class PokemonLookup {
         await this.loadTypeChart();
         await this.loadPokemonList();
         this.loadFromStorage();
+        
+        // Check for URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const pokemonParam = urlParams.get('pokemon');
+        const generationParam = urlParams.get('generation');
+        
+        // Set generation if provided in URL
+        if (generationParam) {
+            const generationValue = parseInt(generationParam);
+            if (generationValue >= 1 && generationValue <= 9) {
+                this.currentGeneration = generationValue;
+                const generationSelect = document.getElementById('generation-select');
+                if (generationSelect) {
+                    generationSelect.value = generationValue;
+                }
+            }
+        }
+        
+        if (pokemonParam) {
+            // Set the search input value
+            const searchInput = document.getElementById('pokemon-search');
+            searchInput.value = pokemonParam;
+            
+            // Update clear button visibility
+            const wrapper = searchInput.closest('.search-input-wrapper');
+            if (wrapper) {
+                wrapper.classList.add('has-content');
+            }
+            
+            // Wait a bit for the page to fully load, then directly load the Pokemon
+            setTimeout(async () => {
+                try {
+                    const pokemonData = await this.getPokemonData(pokemonParam);
+                    if (pokemonData) {
+                        await this.selectPokemon(pokemonData);
+                    } else {
+                        console.error(`Pokemon "${pokemonParam}" not found`);
+                        // Fallback to search if direct load fails
+                        this.searchPokemon({ target: searchInput });
+                    }
+                } catch (error) {
+                    console.error('Error loading Pokemon from URL parameter:', error);
+                    // Fallback to search if there's an error
+                    this.searchPokemon({ target: searchInput });
+                }
+            }, 300);
+        }
     }
 
     bindEvents() {
@@ -2787,6 +2834,19 @@ class PokemonLookup {
         // Handle special cases and format for Bulbapedia URLs
         const name = pokemonName.toLowerCase();
         
+        // Paradox Pokemon - convert hyphens to underscores and capitalize each word
+        const paradoxPokemon = [
+            'scream-tail', 'brute-bonnet', 'flutter-mane', 'slither-wing', 'sandy-shocks',
+            'roaring-moon', 'great-tusk', 'walking-wake', 'gouging-fire', 'raging-bolt',
+            'iron-bundle', 'iron-hands', 'iron-jugulis', 'iron-moth', 'iron-thorns',
+            'iron-treads', 'iron-valiant', 'iron-leaves', 'iron-boulder', 'iron-crown'
+        ];
+        
+        if (paradoxPokemon.includes(name)) {
+            // Convert hyphens to underscores and capitalize each word
+            return name.split('-').map(word => this.capitalizeFirst(word)).join('_');
+        }
+        
         // Regional forms
         if (name.includes('-')) {
             const parts = name.split('-');
@@ -2804,7 +2864,11 @@ class PokemonLookup {
             }
         }
         
-        // Standard formatting
+        // Standard formatting - convert hyphens to underscores for other multi-word names
+        if (name.includes('-')) {
+            return name.split('-').map(word => this.capitalizeFirst(word)).join('_');
+        }
+        
         return this.capitalizeFirst(name);
     }
 
@@ -2884,6 +2948,19 @@ class PokemonLookup {
     formatPokemonName(pokemonName) {
         // Handle regional forms and special cases
         const name = pokemonName.toLowerCase();
+        
+        // Paradox Pokemon - treat as multi-word names, not forms
+        const paradoxPokemon = [
+            'scream-tail', 'brute-bonnet', 'flutter-mane', 'slither-wing', 'sandy-shocks',
+            'roaring-moon', 'great-tusk', 'walking-wake', 'gouging-fire', 'raging-bolt',
+            'iron-bundle', 'iron-hands', 'iron-jugulis', 'iron-moth', 'iron-thorns',
+            'iron-treads', 'iron-valiant', 'iron-leaves', 'iron-boulder', 'iron-crown'
+        ];
+        
+        if (paradoxPokemon.includes(name)) {
+            // Format as multi-word name: "Scream Tail", "Iron Bundle", etc.
+            return name.split('-').map(word => this.capitalizeFirst(word)).join(' ');
+        }
         
         // Regional form mappings
         const regionalForms = {

@@ -67,10 +67,13 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 1.5rem;
-    margin: 1rem;
+    margin: 1rem auto;
     border-radius: 1rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     position: relative;
+    width: calc(100% - 2rem);
+    max-width: calc(100% - 2rem);
+    box-sizing: border-box;
 }
 
 .pokemon-header .bulbapedia-btn {
@@ -1701,6 +1704,9 @@
 @media (min-width: 768px) {
     .pokemon-header {
         padding: 2rem;
+        width: calc(100% - 2rem);
+        max-width: calc(100% - 2rem);
+        box-sizing: border-box;
     }
 
     .main-pokemon-sprite {
@@ -1778,8 +1784,10 @@
 
 @media (min-width: 1200px) {
     .pokemon-header {
-        max-width: 1000px;
+        max-width: calc(100% - 2rem);
+        width: calc(100% - 2rem);
         margin: 1rem auto;
+        box-sizing: border-box;
     }
 
     .abilities-list {
@@ -1791,8 +1799,10 @@
     }
 
     section {
-        max-width: 1200px;
+        max-width: calc(100% - 2rem);
+        width: calc(100% - 2rem);
         margin-left: auto;
         margin-right: auto;
+        box-sizing: border-box;
     }
 }

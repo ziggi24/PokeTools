@@ -48,8 +48,11 @@ class PokemonTeamBuilder {
             slot.addEventListener('click', () => this.handleTeamSlotClick(index));
         });
 
-        // Click outside to close search results
+        // Click outside to close search results and action menus
         document.addEventListener('click', (e) => {
+            if (!e.target.closest('.action-menu-container')) {
+                this.closeAllActionMenus();
+            }
             if (!e.target.closest('.pokemon-search') && !e.target.closest('.opponent-search')) {
                 this.hideSearchResults();
             }
@@ -506,9 +509,21 @@ class PokemonTeamBuilder {
             if (pokemon) {
                 slot.className = 'team-slot filled';
                 slot.innerHTML = `
-                    <button class="bulbapedia-btn" title="View on Bulbapedia">
-                        <i class="fas fa-external-link-alt"></i>
-                    </button>
+                    <div class="action-menu-container">
+                        <button class="action-menu-btn" title="Open in...">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                        <div class="action-menu-dropdown">
+                            <button class="action-menu-item" data-action="bulbapedia">
+                                <i class="fab fa-wikipedia-w"></i>
+                                <span>Bulbapedia</span>
+                            </button>
+                            <button class="action-menu-item" data-action="lookup">
+                                <i class="fas fa-search"></i>
+                                <span>Lookup</span>
+                            </button>
+                        </div>
+                    </div>
                     <button class="remove-btn" title="Remove Pokemon">
                         <i class="fas fa-times"></i>
                     </button>
@@ -527,9 +542,24 @@ class PokemonTeamBuilder {
                     this.removePokemonFromTeam(index);
                 });
 
-                slot.querySelector('.bulbapedia-btn').addEventListener('click', (e) => {
+                const actionMenuBtn = slot.querySelector('.action-menu-btn');
+                const actionMenuDropdown = slot.querySelector('.action-menu-dropdown');
+                const actionMenuItems = slot.querySelectorAll('.action-menu-item');
+
+                // Toggle dropdown on button click
+                actionMenuBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    this.openBulbapedia(pokemon.name);
+                    this.toggleActionMenu(slot, actionMenuDropdown);
+                });
+
+                // Handle menu item clicks
+                actionMenuItems.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const action = item.dataset.action;
+                        this.handleActionMenuClick(action, pokemon.name);
+                        this.closeAllActionMenus();
+                    });
                 });
             } else {
                 slot.className = 'team-slot empty';
@@ -1067,10 +1097,91 @@ class PokemonTeamBuilder {
         `;
     }
 
+    toggleActionMenu(slot, dropdown) {
+        // Close all other dropdowns first
+        this.closeAllActionMenus();
+        
+        // Toggle this dropdown
+        const isOpen = dropdown.classList.contains('active');
+        if (!isOpen) {
+            dropdown.classList.add('active');
+            slot.classList.add('menu-open');
+        }
+    }
+
+    closeAllActionMenus() {
+        document.querySelectorAll('.action-menu-dropdown').forEach(dropdown => {
+            dropdown.classList.remove('active');
+        });
+        document.querySelectorAll('.team-slot').forEach(slot => {
+            slot.classList.remove('menu-open');
+        });
+    }
+
+    handleActionMenuClick(action, pokemonName) {
+        if (action === 'bulbapedia') {
+            this.openBulbapedia(pokemonName);
+        } else if (action === 'lookup') {
+            this.openLookup(pokemonName);
+        }
+    }
+
+    formatPokemonNameForBulbapedia(pokemonName) {
+        // Handle special cases and format for Bulbapedia URLs
+        const name = pokemonName.toLowerCase();
+        
+        // Paradox Pokemon - convert hyphens to underscores and capitalize each word
+        const paradoxPokemon = [
+            'scream-tail', 'brute-bonnet', 'flutter-mane', 'slither-wing', 'sandy-shocks',
+            'roaring-moon', 'great-tusk', 'walking-wake', 'gouging-fire', 'raging-bolt',
+            'iron-bundle', 'iron-hands', 'iron-jugulis', 'iron-moth', 'iron-thorns',
+            'iron-treads', 'iron-valiant', 'iron-leaves', 'iron-boulder', 'iron-crown'
+        ];
+        
+        if (paradoxPokemon.includes(name)) {
+            // Convert hyphens to underscores and capitalize each word
+            return name.split('-').map(word => this.capitalizeFirst(word)).join('_');
+        }
+        
+        // Regional forms
+        if (name.includes('-')) {
+            const parts = name.split('-');
+            if (parts[1] === 'alola' || parts[1] === 'alolan') {
+                return this.capitalizeFirst(parts[0]) + ' (Alolan)';
+            }
+            if (parts[1] === 'galar' || parts[1] === 'galarian') {
+                return this.capitalizeFirst(parts[0]) + ' (Galarian)';
+            }
+            if (parts[1] === 'hisui' || parts[1] === 'hisuian') {
+                return this.capitalizeFirst(parts[0]) + ' (Hisuian)';
+            }
+            if (parts[1] === 'paldea' || parts[1] === 'paldean') {
+                return this.capitalizeFirst(parts[0]) + ' (Paldean)';
+            }
+        }
+        
+        // Standard formatting - convert hyphens to underscores for other multi-word names
+        if (name.includes('-')) {
+            return name.split('-').map(word => this.capitalizeFirst(word)).join('_');
+        }
+        
+        return this.capitalizeFirst(name);
+    }
+
+    capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
     openBulbapedia(pokemonName) {
-        const formattedName = pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1);
-        const url = `https://bulbapedia.bulbagarden.net/wiki/${formattedName}_(Pokémon)#Base_stats`;
+        const formattedName = this.formatPokemonNameForBulbapedia(pokemonName);
+        const url = `https://bulbapedia.bulbagarden.net/wiki/${formattedName}_(Pokémon)`;
         window.open(url, '_blank');
+    }
+
+    openLookup(pokemonName) {
+        // Navigate to lookup page with Pokemon name and generation as URL parameters
+        const lookupUrl = `lookup.html?pokemon=${encodeURIComponent(pokemonName)}&generation=${this.currentGeneration}`;
+        window.location.href = lookupUrl;
     }
 
     handleAddPokemon() {
