@@ -18,6 +18,7 @@
     justify-content: center;
     min-height: 60vh;
     padding: 2rem;
+    border-radius: 1rem;
 }
 
 .no-pokemon-content {
@@ -69,7 +70,7 @@
     padding: 1.5rem;
     margin: 1rem auto;
     border-radius: 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     position: relative;
     width: calc(100% - 2rem);
     max-width: calc(100% - 2rem);
