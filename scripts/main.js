@@ -1,10 +1,13 @@
 // Pokemon Team Builder - Main JavaScript
+import { getCurrentUser, onAuthStateChange } from './auth.js';
+import { saveTeam } from './team-storage.js';
+
 class PokemonTeamBuilder {
     constructor() {
         this.team = Array(6).fill(null);
         this.pokemonCache = new Map();
         this.typeChart = null;
-        this.currentGeneration = 8;
+        this.currentGeneration = 9; // Default to Gen 9 to match HTML
         this.allPokemon = [];
         this.generationData = this.initGenerationData();
         
@@ -19,6 +22,8 @@ class PokemonTeamBuilder {
         this.updateTypeCoverage();
         this.updateStatsDisplay();
         this.checkSearchInputsOnLoad();
+        this.setupAuthListeners();
+        this.checkForSavedTeam();
     }
 
     bindEvents() {
@@ -38,6 +43,12 @@ class PokemonTeamBuilder {
 
         // Reset button
         document.getElementById('reset-btn').addEventListener('click', this.handleReset.bind(this));
+
+        // Save team button
+        const saveTeamBtn = document.getElementById('save-team-btn');
+        if (saveTeamBtn) {
+            saveTeamBtn.addEventListener('click', this.handleSaveTeam.bind(this));
+        }
 
         // Stats controls
         document.getElementById('stat-select').addEventListener('change', this.updateStatsDisplay.bind(this));
@@ -1256,6 +1267,48 @@ class PokemonTeamBuilder {
 
     async loadFromStorage() {
         try {
+            // First check if there's a team to load from sessionStorage (from profile)
+            const savedTeamData = sessionStorage.getItem('loadTeam');
+            if (savedTeamData) {
+                try {
+                    const teamData = JSON.parse(savedTeamData);
+                    sessionStorage.removeItem('loadTeam'); // Clear after loading
+                    
+                    // Set generation
+                    if (teamData.generation) {
+                        this.currentGeneration = teamData.generation;
+                        document.getElementById('generation-select').value = teamData.generation;
+                    }
+                    
+                    // Load team
+                    if (teamData.pokemon) {
+                        this.team = await Promise.all(teamData.pokemon.map(async pokemon => {
+                            if (!pokemon) return null;
+                            
+                            // Re-fetch complete Pokemon data to ensure we have all fields
+                            const completeData = await this.getPokemonData(pokemon.name);
+                            if (completeData) {
+                                // Adjust types for current generation
+                                return {
+                                    ...completeData,
+                                    types: this.getPokemonTypesForGeneration(pokemon.name, completeData.types)
+                                };
+                            }
+                            return null;
+                        }));
+                        
+                        this.updateTeamDisplay();
+                        this.updateStatsDisplay();
+                        this.updateTypeCoverage();
+                        this.saveToStorage(); // Save to localStorage for persistence
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error loading team from sessionStorage:', error);
+                }
+            }
+            
+            // Otherwise load from localStorage
             const saved = localStorage.getItem('poketools-data');
             if (saved) {
                 const data = JSON.parse(saved);
@@ -1309,8 +1362,8 @@ class PokemonTeamBuilder {
             this.team = Array(6).fill(null);
             
             // Reset generation
-            this.currentGeneration = 8;
-            document.getElementById('generation-select').value = 8;
+            this.currentGeneration = 9;
+            document.getElementById('generation-select').value = 9;
             
             // Clear search inputs
             document.getElementById('pokemon-search').value = '';
@@ -1330,6 +1383,79 @@ class PokemonTeamBuilder {
             this.hideOpponentResults();
             
             console.log('Team and settings reset successfully');
+        }
+    }
+
+    setupAuthListeners() {
+        // Listen for auth state changes to show/hide save button
+        onAuthStateChange((user) => {
+            const saveTeamBtn = document.getElementById('save-team-btn');
+            if (saveTeamBtn) {
+                if (user) {
+                    saveTeamBtn.classList.remove('hidden');
+                } else {
+                    saveTeamBtn.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    checkForSavedTeam() {
+        // Check if there's a team to load from sessionStorage
+        const savedTeamData = sessionStorage.getItem('loadTeam');
+        if (savedTeamData) {
+            // Team will be loaded in loadFromStorage
+            return;
+        }
+        
+        // Check auth state on load
+        const user = getCurrentUser();
+        const saveTeamBtn = document.getElementById('save-team-btn');
+        if (saveTeamBtn) {
+            if (user) {
+                saveTeamBtn.classList.remove('hidden');
+            } else {
+                saveTeamBtn.classList.add('hidden');
+            }
+        }
+    }
+
+    async handleSaveTeam() {
+        const user = getCurrentUser();
+        if (!user) {
+            alert('Please sign in to save your team.');
+            return;
+        }
+
+        // Check if team has at least one Pokemon
+        const hasPokemon = this.team.some(p => p !== null);
+        if (!hasPokemon) {
+            alert('Please add at least one Pokemon to your team before saving.');
+            return;
+        }
+
+        const saveTeamBtn = document.getElementById('save-team-btn');
+        if (saveTeamBtn) {
+            saveTeamBtn.disabled = true;
+            saveTeamBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+
+        try {
+            await saveTeam(this.team, this.currentGeneration);
+            if (saveTeamBtn) {
+                saveTeamBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                setTimeout(() => {
+                    saveTeamBtn.innerHTML = '<i class="fas fa-save"></i> Save Team';
+                    saveTeamBtn.disabled = false;
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Error saving team:', error);
+            alert('Failed to save team. Please try again.');
+            if (saveTeamBtn) {
+                saveTeamBtn.disabled = false;
+                saveTeamBtn.innerHTML = '<i class="fas fa-save"></i> Save Team';
+            }
         }
     }
 }
