@@ -92,24 +92,30 @@ body {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex: 1;
+    align-items: center;
 }
 
 .nav-btn {
-    padding: 0.5rem 1.5rem;
+    padding: 0.5rem 1rem;
     background: rgba(255, 255, 255, 0.2);
     color: white;
     text-decoration: none;
     border-radius: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     transition: all 0.2s;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    min-width: 140px;
+    min-width: 0;
     justify-content: center;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-btn:hover {
@@ -1277,9 +1283,20 @@ section h2 {
 .nav-buttons-wrapper {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
     width: 100%;
-    justify-content: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.nav-buttons-wrapper .profile-icon-btn {
+    flex-shrink: 0;
+    align-self: center;
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
 }
 
 .profile-icon-btn {
@@ -1308,23 +1325,35 @@ section h2 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 1rem;
+    min-width: 0;
+}
+
+.team-section-header h2 {
+    margin-bottom: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .save-team-btn {
     background: var(--success-color);
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .save-team-btn:hover {
@@ -1722,18 +1751,45 @@ section h2 {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .nav-buttons-wrapper {
-        flex-direction: column;
-        gap: 0.5rem;
+        flex-direction: row;
+        gap: 0.4rem;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+    }
+
+    .nav-buttons {
+        flex: 1;
+        justify-content: center;
+        flex-wrap: nowrap;
+        min-width: 0;
+        gap: 0.4rem;
+    }
+
+    .nav-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        gap: 0.3rem;
+    }
+
+    .nav-buttons-wrapper .profile-icon-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
     }
 
     .team-section-header {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+    }
+
+    .team-section-header h2 {
+        font-size: 1.1rem;
     }
 
     .save-team-btn {
-        width: 100%;
-        justify-content: center;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+        gap: 0.3rem;
     }
 
     .modal-content {

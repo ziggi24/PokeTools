@@ -12,7 +12,20 @@ export async function loginWithGoogle() {
         return { success: true, user: result.user };
     } catch (error) {
         console.error("Login failed", error);
-        return { success: false, error: error.message };
+        
+        // Provide user-friendly error messages
+        let errorMessage = error.message;
+        if (error.code === 'auth/unauthorized-domain') {
+            errorMessage = 'This domain is not authorized. Please contact the site administrator or check Firebase Console settings.';
+        } else if (error.code === 'auth/popup-blocked') {
+            errorMessage = 'Popup was blocked by your browser. Please allow popups for this site and try again.';
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            errorMessage = 'Sign-in popup was closed. Please try again.';
+        } else if (error.code === 'auth/network-request-failed') {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+        }
+        
+        return { success: false, error: errorMessage, code: error.code };
     }
 }
 
