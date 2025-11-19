@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokeTools - Pokemon Lookup</title>
+    <title>Pokemon Tools - Pokemon Lookup</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/lookup.css">
@@ -13,7 +13,7 @@
         <!-- Header with Navigation -->
         <header class="app-header">
             <div class="header-nav">
-                <h1><i class="fas fa-pokeball"></i> PokeTools</h1>
+                <h1><i class="fas fa-pokeball"></i> Pokemon Tools</h1>
                 <div class="nav-buttons-wrapper">
                     <div class="nav-buttons">
                         <a href="index.html" class="nav-btn">
@@ -22,10 +22,10 @@
                         <a href="lookup.html" class="nav-btn active">
                             <i class="fas fa-search"></i> Pokemon Lookup
                         </a>
+                        <a href="profile.html" id="profile-icon-btn" class="profile-icon-btn" aria-label="Profile">
+                            <i class="fas fa-user-circle"></i>
+                        </a>
                     </div>
-                    <button id="profile-icon-btn" class="profile-icon-btn" aria-label="Profile">
-                        <i class="fas fa-user-circle"></i>
-                    </button>
                 </div>
             </div>
             <div class="generation-selector">
@@ -143,17 +143,52 @@
 
     <!-- Login Modal -->
     <div id="login-modal" class="modal-overlay hidden">
-        <div class="modal-content">
+        <div class="modal-content login-modal-content">
             <button class="modal-close" id="login-modal-close">
                 <i class="fas fa-times"></i>
             </button>
             <div class="modal-body">
                 <h2>Sign In</h2>
-                <p>Sign in with Google to save and manage your teams</p>
-                <button id="google-signin-btn" class="google-signin-btn">
-                    <i class="fab fa-google"></i>
-                    Sign in with Google
-                </button>
+                <p>Sign in to save and manage your teams</p>
+                
+                <!-- Email/Password Form -->
+                <div class="email-password-form">
+                    <div class="auth-toggle">
+                        <button id="auth-toggle-signin" class="auth-toggle-btn active">Sign In</button>
+                        <button id="auth-toggle-signup" class="auth-toggle-btn">Sign Up</button>
+                    </div>
+                    <form id="email-password-form">
+                        <div class="form-group">
+                            <label for="email-input">Email</label>
+                            <input type="email" id="email-input" class="form-input" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password-input">Password</label>
+                            <input type="password" id="password-input" class="form-input" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" id="email-signin-btn" class="email-signin-btn">
+                            <i class="fas fa-envelope"></i>
+                            <span id="email-btn-text">Sign In</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+
+                <!-- Social Sign In Buttons -->
+                <div class="social-signin-buttons">
+                    <button id="google-signin-btn" class="social-signin-btn google-signin-btn">
+                        <i class="fab fa-google"></i>
+                        Sign in with Google
+                    </button>
+                    <button id="github-signin-btn" class="social-signin-btn github-signin-btn">
+                        <i class="fab fa-github"></i>
+                        Sign in with GitHub
+                    </button>
+                </div>
+                
                 <div id="login-error" class="error-message hidden"></div>
             </div>
         </div>

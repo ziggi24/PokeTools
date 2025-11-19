@@ -1,86 +1,64 @@
-// Authentication UI Module
-import { 
-    loginWithGoogle, 
-    loginWithGitHub,
-    loginWithEmailPassword,
-    signUpWithEmailPassword,
-    logout, 
-    getCurrentUser, 
-    onAuthStateChange 
-} from './auth.js';
+// Profile Page JavaScript
+import { getCurrentUser, onAuthStateChange, logout } from './auth.js';
 import { loadUserTeams, deleteTeam, deleteUserAccount } from './team-storage.js';
 
 let currentDeleteTeamId = null;
 
-// Initialize auth UI
+// Initialize profile page
 document.addEventListener('DOMContentLoaded', () => {
-    initializeAuthUI();
+    initializeProfilePage();
 });
 
-function initializeAuthUI() {
-    // Profile icon click handler
-    const profileIconBtn = document.getElementById('profile-icon-btn');
-    if (profileIconBtn) {
-        profileIconBtn.addEventListener('click', handleProfileIconClick);
+function initializeProfilePage() {
+    // Set up event listeners first
+    setupEventListeners();
+    
+    // Wait for auth state to initialize before checking
+    let authChecked = false;
+    let redirectTimeout = null;
+    
+    const unsubscribe = onAuthStateChange((user) => {
+        // Clear any pending redirect timeout
+        if (redirectTimeout) {
+            clearTimeout(redirectTimeout);
+            redirectTimeout = null;
+        }
+        
+        if (authChecked) {
+            // Only handle subsequent auth changes (logout)
+            if (!user) {
+                window.location.href = 'index.html';
+            }
+            return;
+        }
+        
+        authChecked = true;
+        
+        // Small delay to ensure page is fully loaded
+        redirectTimeout = setTimeout(() => {
+            if (!user) {
+                // Redirect to login if not authenticated
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Load profile data
+            loadProfileData();
+        }, 50);
+    });
+    
+    // Also check immediately in case auth is already initialized
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        authChecked = true;
+        // Small delay to ensure page is fully loaded
+        setTimeout(() => {
+            loadProfileData();
+        }, 50);
     }
+}
 
-    // Login modal handlers
-    const loginModal = document.getElementById('login-modal');
-    const loginModalClose = document.getElementById('login-modal-close');
-    const googleSigninBtn = document.getElementById('google-signin-btn');
-    const githubSigninBtn = document.getElementById('github-signin-btn');
-    const emailPasswordForm = document.getElementById('email-password-form');
-    const authToggleSignin = document.getElementById('auth-toggle-signin');
-    const authToggleSignup = document.getElementById('auth-toggle-signup');
-
-    if (loginModalClose) {
-        loginModalClose.addEventListener('click', () => hideModal('login-modal'));
-    }
-
-    if (googleSigninBtn) {
-        googleSigninBtn.addEventListener('click', handleGoogleSignIn);
-    }
-
-    if (githubSigninBtn) {
-        githubSigninBtn.addEventListener('click', handleGitHubSignIn);
-    }
-
-    if (emailPasswordForm) {
-        emailPasswordForm.addEventListener('submit', handleEmailPasswordSubmit);
-    }
-
-    if (authToggleSignin) {
-        authToggleSignin.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchAuthMode('signin');
-        });
-    }
-
-    if (authToggleSignup) {
-        authToggleSignup.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchAuthMode('signup');
-        });
-    }
-
-    // Profile modal handlers
-    const profileModal = document.getElementById('profile-modal');
-    const profileModalClose = document.getElementById('profile-modal-close');
-    const logoutBtn = document.getElementById('logout-btn');
-    const deleteAccountBtn = document.getElementById('delete-account-btn');
-
-    if (profileModalClose) {
-        profileModalClose.addEventListener('click', () => hideModal('profile-modal'));
-    }
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
-
-    if (deleteAccountBtn) {
-        deleteAccountBtn.addEventListener('click', () => showModal('delete-account-modal'));
-    }
-
+function setupEventListeners() {
     // Delete team modal handlers
     const deleteTeamModal = document.getElementById('delete-team-modal');
     const deleteTeamModalClose = document.getElementById('delete-team-modal-close');
@@ -122,19 +100,19 @@ function initializeAuthUI() {
         confirmEmailInput.addEventListener('input', handleEmailInputChange);
     }
 
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // Delete account button
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', () => showModal('delete-account-modal'));
+    }
+
     // Close modals when clicking outside
-    if (loginModal) {
-        loginModal.addEventListener('click', (e) => {
-            if (e.target === loginModal) hideModal('login-modal');
-        });
-    }
-
-    if (profileModal) {
-        profileModal.addEventListener('click', (e) => {
-            if (e.target === profileModal) hideModal('profile-modal');
-        });
-    }
-
     if (deleteTeamModal) {
         deleteTeamModal.addEventListener('click', (e) => {
             if (e.target === deleteTeamModal) hideModal('delete-team-modal');
@@ -146,188 +124,11 @@ function initializeAuthUI() {
             if (e.target === deleteAccountModal) hideModal('delete-account-modal');
         });
     }
-
-    // Listen for auth state changes
-    onAuthStateChange((user) => {
-        updateUIForAuthState(user);
-    });
 }
 
-function handleProfileIconClick(e) {
+function loadProfileData() {
     const user = getCurrentUser();
-    if (!user) {
-        e.preventDefault();
-        e.stopPropagation();
-        showModal('login-modal');
-    }
-    // If user is logged in, let the link navigate naturally to profile.html
-}
-
-async function handleGoogleSignIn() {
-    const googleSigninBtn = document.getElementById('google-signin-btn');
-    const loginError = document.getElementById('login-error');
-
-    if (googleSigninBtn) {
-        googleSigninBtn.disabled = true;
-        googleSigninBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-    }
-
-    if (loginError) {
-        loginError.classList.add('hidden');
-    }
-
-    const result = await loginWithGoogle();
-    
-    if (result.success) {
-        hideModal('login-modal');
-        // Wait a moment for auth state to propagate before navigating
-        setTimeout(() => {
-            window.location.href = 'profile.html';
-        }, 100);
-    } else {
-        if (loginError) {
-            loginError.textContent = result.error || 'Failed to sign in. Please try again.';
-            loginError.classList.remove('hidden');
-        }
-    }
-
-    if (googleSigninBtn) {
-        googleSigninBtn.disabled = false;
-        googleSigninBtn.innerHTML = '<i class="fab fa-google"></i> Sign in with Google';
-    }
-}
-
-async function handleGitHubSignIn() {
-    const githubSigninBtn = document.getElementById('github-signin-btn');
-    const loginError = document.getElementById('login-error');
-
-    if (githubSigninBtn) {
-        githubSigninBtn.disabled = true;
-        githubSigninBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-    }
-
-    if (loginError) {
-        loginError.classList.add('hidden');
-    }
-
-    const result = await loginWithGitHub();
-    
-    if (result.success) {
-        hideModal('login-modal');
-        // Wait a moment for auth state to propagate before navigating
-        setTimeout(() => {
-            window.location.href = 'profile.html';
-        }, 100);
-    } else {
-        if (loginError) {
-            loginError.textContent = result.error || 'Failed to sign in. Please try again.';
-            loginError.classList.remove('hidden');
-        }
-    }
-
-    if (githubSigninBtn) {
-        githubSigninBtn.disabled = false;
-        githubSigninBtn.innerHTML = '<i class="fab fa-github"></i> Sign in with GitHub';
-    }
-}
-
-function switchAuthMode(mode) {
-    const signinBtn = document.getElementById('auth-toggle-signin');
-    const signupBtn = document.getElementById('auth-toggle-signup');
-    const emailBtn = document.getElementById('email-signin-btn');
-    const emailBtnText = document.getElementById('email-btn-text');
-    const loginError = document.getElementById('login-error');
-
-    if (mode === 'signin') {
-        signinBtn.classList.add('active');
-        signupBtn.classList.remove('active');
-        if (emailBtnText) emailBtnText.textContent = 'Sign In';
-    } else {
-        signupBtn.classList.add('active');
-        signinBtn.classList.remove('active');
-        if (emailBtnText) emailBtnText.textContent = 'Sign Up';
-    }
-
-    if (loginError) {
-        loginError.classList.add('hidden');
-    }
-}
-
-async function handleEmailPasswordSubmit(e) {
-    e.preventDefault();
-    
-    const emailInput = document.getElementById('email-input');
-    const passwordInput = document.getElementById('password-input');
-    const emailBtn = document.getElementById('email-signin-btn');
-    const loginError = document.getElementById('login-error');
-    const signinBtn = document.getElementById('auth-toggle-signin');
-    
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const isSignIn = signinBtn.classList.contains('active');
-
-    if (!email || !password) {
-        if (loginError) {
-            loginError.textContent = 'Please enter both email and password.';
-            loginError.classList.remove('hidden');
-        }
-        return;
-    }
-
-    if (emailBtn) {
-        emailBtn.disabled = true;
-        emailBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (isSignIn ? 'Signing in...' : 'Signing up...');
-    }
-
-    if (loginError) {
-        loginError.classList.add('hidden');
-    }
-
-    let result;
-    if (isSignIn) {
-        result = await loginWithEmailPassword(email, password);
-    } else {
-        result = await signUpWithEmailPassword(email, password);
-    }
-
-    if (result.success) {
-        hideModal('login-modal');
-        // Wait a moment for auth state to propagate before navigating
-        setTimeout(() => {
-            window.location.href = 'profile.html';
-        }, 100);
-    } else {
-        if (loginError) {
-            loginError.textContent = result.error || 'Failed to sign in. Please try again.';
-            loginError.classList.remove('hidden');
-        }
-    }
-
-    if (emailBtn) {
-        emailBtn.disabled = false;
-        const emailBtnText = document.getElementById('email-btn-text');
-        emailBtn.innerHTML = '<i class="fas fa-envelope"></i> <span id="email-btn-text">' + (isSignIn ? 'Sign In' : 'Sign Up') + '</span>';
-    }
-}
-
-async function handleLogout() {
-    const result = await logout();
-    if (result.success) {
-        hideModal('profile-modal');
-    }
-}
-
-function updateUIForAuthState(user) {
-    // This will be called when auth state changes
-    // Can be used to update UI elements that depend on auth state
-}
-
-async function showProfileModal() {
-    const user = getCurrentUser();
-    if (!user) {
-        showModal('login-modal');
-        return;
-    }
+    if (!user) return;
 
     // Update profile info
     const profilePhoto = document.getElementById('profile-photo');
@@ -355,7 +156,7 @@ async function showProfileModal() {
     }
 
     if (profileName) {
-        profileName.textContent = user.displayName || 'User';
+        profileName.textContent = user.displayName || user.email?.split('@')[0] || 'User';
     }
 
     if (profileEmail) {
@@ -363,9 +164,7 @@ async function showProfileModal() {
     }
 
     // Load and display teams
-    await loadAndDisplayTeams();
-
-    showModal('profile-modal');
+    loadAndDisplayTeams();
 }
 
 async function loadAndDisplayTeams() {
@@ -532,6 +331,7 @@ async function handleConfirmDeleteAccount() {
         await logout();
         hideModal('delete-account-modal');
         alert('Account deleted successfully.');
+        window.location.href = 'index.html';
     } catch (error) {
         console.error('Error deleting account:', error);
         if (deleteAccountError) {
@@ -542,6 +342,13 @@ async function handleConfirmDeleteAccount() {
             confirmDeleteBtn.disabled = false;
             confirmDeleteBtn.textContent = 'Delete Account';
         }
+    }
+}
+
+async function handleLogout() {
+    const result = await logout();
+    if (result.success) {
+        window.location.href = 'index.html';
     }
 }
 
@@ -579,4 +386,5 @@ function hideModal(modalId) {
         currentDeleteTeamId = null;
     }
 }
+
 
