@@ -1109,6 +1109,8 @@ section h2 {
 
     .header-nav h1 {
         margin: 0;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .nav-buttons-wrapper {
@@ -1248,10 +1250,12 @@ section h2 {
 .reset-section {
     background: var(--surface-color);
     text-align: center;
-    border-top: 2px solid var(--border-color);
     margin-top: 2rem;
     border-radius: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .reset-button {
@@ -1267,7 +1271,7 @@ section h2 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin: 0 auto 1rem auto;
+    margin: 1rem auto;
 }
 
 .reset-button:hover {
@@ -1985,5 +1989,39 @@ section h2 {
     .btn-danger,
     .btn-secondary {
         width: 100%;
+    }
+}
+
+/* Footer */
+.app-footer {
+    margin-top: 4rem;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-color);
+}
+
+.app-footer p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.app-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.app-footer a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+    .app-footer {
+        padding: 1.5rem 2rem;
+        font-size: 0.875rem;
     }
 }

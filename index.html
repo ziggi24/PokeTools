@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Tools - Team Builder</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/main.css">
+    <script src="https://kit.fontawesome.com/5d8ca63dbb.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
             <div class="header-nav">
-                <h1><i class="fas fa-pokeball"></i> Pokemon Tools</h1>
+                <h1><i class="fa-duotone fa-solid fa-toolbox" style="--fa-primary-color: #d10a3c; --fa-secondary-color: #eceff3;"></i> Pokemon Tools</h1>
                 <div class="nav-buttons-wrapper">
                     <div class="nav-buttons">
                         <a href="index.html" class="nav-btn active">
@@ -282,10 +282,21 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>
+            &copy; <span id="current-year"></span> <a href="https://github.com/ziggi24/PokeTools" target="_blank" rel="noopener noreferrer">Bee Sharpe</a>
+        </p>
+    </footer>
+
     <script type="module" src="scripts/firebase-config.js"></script>
     <script type="module" src="scripts/auth.js"></script>
     <script type="module" src="scripts/team-storage.js"></script>
     <script type="module" src="scripts/auth-ui.js"></script>
     <script type="module" src="scripts/main.js"></script>
+    <script>
+        // Set current year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>
