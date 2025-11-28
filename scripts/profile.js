@@ -15,15 +15,9 @@ function initializeProfilePage() {
     
     // Wait for auth state to initialize before checking
     let authChecked = false;
-    let redirectTimeout = null;
+    let profileLoaded = false;
     
     const unsubscribe = onAuthStateChange((user) => {
-        // Clear any pending redirect timeout
-        if (redirectTimeout) {
-            clearTimeout(redirectTimeout);
-            redirectTimeout = null;
-        }
-        
         if (authChecked) {
             // Only handle subsequent auth changes (logout)
             if (!user) {
@@ -34,8 +28,8 @@ function initializeProfilePage() {
         
         authChecked = true;
         
-        // Small delay to ensure page is fully loaded
-        redirectTimeout = setTimeout(() => {
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
             if (!user) {
                 // Redirect to login if not authenticated
                 window.location.href = 'index.html';
@@ -43,19 +37,47 @@ function initializeProfilePage() {
             }
             
             // Load profile data
-            loadProfileData();
-        }, 50);
+            if (!profileLoaded) {
+                profileLoaded = true;
+                loadProfileData().catch(error => {
+                    console.error('Error loading profile data:', error);
+                    // Show error to user
+                    const profileName = document.getElementById('profile-name');
+                    if (profileName) {
+                        profileName.textContent = 'Error loading profile';
+                    }
+                });
+            }
+        });
     });
     
     // Also check immediately in case auth is already initialized
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-        authChecked = true;
-        // Small delay to ensure page is fully loaded
-        setTimeout(() => {
-            loadProfileData();
-        }, 50);
-    }
+    // Use a small delay to ensure Firebase auth is ready
+    setTimeout(() => {
+        const currentUser = getCurrentUser();
+        if (currentUser && !authChecked) {
+            authChecked = true;
+            if (!profileLoaded) {
+                profileLoaded = true;
+                loadProfileData().catch(error => {
+                    console.error('Error loading profile data:', error);
+                    // Show error to user
+                    const profileName = document.getElementById('profile-name');
+                    if (profileName) {
+                        profileName.textContent = 'Error loading profile';
+                    }
+                });
+            }
+        } else if (!currentUser && !authChecked) {
+            // Wait a bit longer for auth state to initialize
+            setTimeout(() => {
+                const user = getCurrentUser();
+                if (!user) {
+                    window.location.href = 'index.html';
+                }
+            }, 500);
+        }
+    }, 200);
 }
 
 function setupEventListeners() {
@@ -126,45 +148,63 @@ function setupEventListeners() {
     }
 }
 
-function loadProfileData() {
-    const user = getCurrentUser();
-    if (!user) return;
+async function loadProfileData() {
+    try {
+        const user = getCurrentUser();
+        if (!user) {
+            console.warn('No user found, redirecting to login...');
+            window.location.href = 'index.html';
+            return;
+        }
 
-    // Update profile info
-    const profilePhoto = document.getElementById('profile-photo');
-    const profileName = document.getElementById('profile-name');
-    const profileEmail = document.getElementById('profile-email');
+        // Update profile info
+        const profilePhoto = document.getElementById('profile-photo');
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
 
-    if (profilePhoto) {
-        // Use cat SVG for email/password users, otherwise use their photo
-        if (user.providerData && user.providerData.length > 0) {
-            const providerId = user.providerData[0].providerId;
-            if (providerId === 'password') {
-                // Email/password users get the cat SVG
-                profilePhoto.src = 'assets/undraw_cat_lqdj.svg';
-                profilePhoto.alt = user.displayName || 'User';
+        if (profilePhoto) {
+            // Use cat SVG for email/password users, otherwise use their photo
+            if (user.providerData && user.providerData.length > 0) {
+                const providerId = user.providerData[0].providerId;
+                if (providerId === 'password') {
+                    // Email/password users get the cat SVG
+                    profilePhoto.src = 'assets/undraw_cat_lqdj.svg';
+                    profilePhoto.alt = user.displayName || 'User';
+                } else {
+                    // Social auth users get their profile photo
+                    profilePhoto.src = user.photoURL || 'assets/undraw_cat_lqdj.svg';
+                    profilePhoto.alt = user.displayName || 'User';
+                }
             } else {
-                // Social auth users get their profile photo
-                profilePhoto.src = user.photoURL || 'https://via.placeholder.com/100?text=User';
+                // Fallback to photoURL if providerData not available
+                profilePhoto.src = user.photoURL || 'assets/undraw_cat_lqdj.svg';
                 profilePhoto.alt = user.displayName || 'User';
             }
-        } else {
-            // Fallback to photoURL if providerData not available
-            profilePhoto.src = user.photoURL || 'assets/undraw_cat_lqdj.svg';
-            profilePhoto.alt = user.displayName || 'User';
+            
+            // Handle image load errors
+            profilePhoto.onerror = function() {
+                this.src = 'assets/undraw_cat_lqdj.svg';
+            };
+        }
+
+        if (profileName) {
+            profileName.textContent = user.displayName || user.email?.split('@')[0] || 'User';
+        }
+
+        if (profileEmail) {
+            profileEmail.textContent = user.email || '';
+        }
+
+        // Load and display teams
+        await loadAndDisplayTeams();
+    } catch (error) {
+        console.error('Error in loadProfileData:', error);
+        // Show error message to user
+        const profileName = document.getElementById('profile-name');
+        if (profileName) {
+            profileName.textContent = 'Error loading profile';
         }
     }
-
-    if (profileName) {
-        profileName.textContent = user.displayName || user.email?.split('@')[0] || 'User';
-    }
-
-    if (profileEmail) {
-        profileEmail.textContent = user.email || '';
-    }
-
-    // Load and display teams
-    loadAndDisplayTeams();
 }
 
 async function loadAndDisplayTeams() {

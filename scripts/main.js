@@ -6,6 +6,7 @@ class PokemonTeamBuilder {
     constructor() {
         this.team = Array(6).fill(null);
         this.pokemonCache = new Map();
+        this.speciesCache = new Map();
         this.typeChart = null;
         this.currentGeneration = 9; // Default to Gen 9 to match HTML
         this.allPokemon = [];
@@ -312,7 +313,7 @@ class PokemonTeamBuilder {
     async loadPokemonList() {
         try {
             this.showLoading();
-            const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1000');
+            const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=2000');
             const data = await response.json();
             this.allPokemon = data.results;
         } catch (error) {
@@ -322,6 +323,319 @@ class PokemonTeamBuilder {
         }
     }
 
+    async getPokemonSpecies(speciesUrl) {
+        if (this.speciesCache.has(speciesUrl)) {
+            return this.speciesCache.get(speciesUrl);
+        }
+
+        try {
+            const response = await fetch(speciesUrl);
+            const data = await response.json();
+            this.speciesCache.set(speciesUrl, data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching species data:', error);
+            return null;
+        }
+    }
+
+    getBasePokemonName(pokemonName) {
+        // Get the base Pokemon name by removing form suffixes
+        const name = pokemonName.toLowerCase();
+
+        // Remove common form suffixes
+        const formSuffixes = [
+            '-male', '-female', '-ice', '-noice', '-mega', '-mega-x', '-mega-y',
+            '-alola', '-galar', '-hisui', '-paldea', '-alolan', '-galarian', '-hisuian', '-paldean',
+            '-plant', '-sandy', '-trash', '-sunny', '-rainy', '-snowy', '-overcast',
+            '-normal', '-attack', '-defense', '-speed', '-zen', '-therian', '-incarnate',
+            '-origin', '-altered', '-sky', '-land', '-black', '-white', '-red', '-blue'
+        ];
+
+        for (const suffix of formSuffixes) {
+            if (name.endsWith(suffix)) {
+                return name.slice(0, -suffix.length);
+            }
+        }
+
+        // For names with hyphens, try to extract base name
+        // But keep names that are legitimately multi-word (like "mr-mime")
+        const hyphenIndex = name.lastIndexOf('-');
+        if (hyphenIndex > 0) {
+            // Check if it's a known multi-word Pokemon name
+            const multiWordPokemon = [
+                'mr-mime', 'mime-jr', 'type-null', 'nidoran-f', 'nidoran-m',
+                'farfetchd', 'sirfetchd', 'scream-tail', 'brute-bonnet', 'flutter-mane',
+                'slither-wing', 'sandy-shocks', 'roaring-moon', 'great-tusk', 'walking-wake',
+                'gouging-fire', 'raging-bolt', 'iron-bundle', 'iron-hands', 'iron-jugulis',
+                'iron-moth', 'iron-thorns', 'iron-treads', 'iron-valiant', 'iron-leaves',
+                'iron-boulder', 'iron-crown'
+            ];
+
+            if (!multiWordPokemon.includes(name)) {
+                // Likely a form suffix, return the base name
+                return name.substring(0, hyphenIndex);
+            }
+        }
+
+        return name;
+    }
+
+    isMegaEvolution(pokemonName) {
+        const name = pokemonName.toLowerCase();
+        return name.includes('-mega') || name.includes('primal');
+    }
+
+    isRegionalForm(pokemonName) {
+        const regionalKeywords = ['alolan', 'galarian', 'hisuian', 'paldean'];
+        return regionalKeywords.some(keyword => pokemonName.toLowerCase().includes(keyword));
+    }
+
+    getGenerationFromSpecies(speciesData) {
+        // Extract generation number from generation URL
+        if (speciesData.generation && speciesData.generation.url) {
+            const urlParts = speciesData.generation.url.split('/').filter(part => part);
+            const generationPart = urlParts[urlParts.length - 1];
+            const generation = parseInt(generationPart);
+            if (!isNaN(generation)) {
+                return generation;
+            }
+        }
+        return null;
+    }
+
+    getRegionalAdjectiveForGeneration(generation) {
+        const regionalAdjectives = {
+            1: 'Kantonian',
+            2: 'Johtonian',
+            3: 'Hoennian',
+            4: 'Sinnohan',
+            5: 'Unovan',
+            6: 'Kalosian',
+            7: 'Alolan',
+            8: 'Galarian',
+            9: 'Paldean'
+        };
+        return regionalAdjectives[generation] || null;
+    }
+
+    hasMultipleRegionalForms(speciesData) {
+        if (!speciesData || !speciesData.varieties) return false;
+        
+        const regionalForms = speciesData.varieties.filter(variety => {
+            const name = variety.pokemon.name.toLowerCase();
+            return this.isRegionalForm(name);
+        });
+        
+        return regionalForms.length > 0;
+    }
+
+    formatFormName(pokemonName, speciesData = null, generation = null) {
+        const name = pokemonName.toLowerCase();
+        
+        // Special cases for Eiscue
+        if (name === 'eiscue-ice') return 'Ice Face';
+        if (name === 'eiscue-noice') return 'Noice Face';
+        
+        // Special cases for Meowstic
+        if (name === 'meowstic-male' || name === 'meowstic') return 'Male';
+        if (name === 'meowstic-female') return 'Female';
+        
+        // Special cases for other gendered Pokemon
+        if (name.endsWith('-male')) return 'Male';
+        if (name.endsWith('-female')) return 'Female';
+        
+        // Check if this is a regional form
+        const isRegional = this.isRegionalForm(name);
+        
+        // Regional forms - return the regional adjective
+        if (name.includes('-alola') || name.includes('-alolan')) return 'Alolan';
+        if (name.includes('-galar') || name.includes('-galarian')) return 'Galarian';
+        if (name.includes('-hisui') || name.includes('-hisuian')) return 'Hisuian';
+        if (name.includes('-paldea') || name.includes('-paldean')) return 'Paldean';
+        
+        // If this is the base form (not regional) and there are regional forms,
+        // show the base form's regional adjective based on generation
+        if (!isRegional && speciesData && this.hasMultipleRegionalForms(speciesData)) {
+            // Get generation if not provided
+            if (!generation) {
+                generation = this.getGenerationFromSpecies(speciesData);
+            }
+            
+            if (generation) {
+                const regionalAdjective = this.getRegionalAdjectiveForGeneration(generation);
+                if (regionalAdjective) {
+                    return regionalAdjective;
+                }
+            }
+        }
+        
+        // Wormadam forms
+        if (name === 'wormadam-plant') return 'Plant Cloak';
+        if (name === 'wormadam-sandy') return 'Sandy Cloak';
+        if (name === 'wormadam-trash') return 'Trash Cloak';
+        
+        // Rotom forms
+        if (name === 'rotom') return 'Normal';
+        if (name === 'rotom-heat') return 'Heat';
+        if (name === 'rotom-wash') return 'Wash';
+        if (name === 'rotom-frost') return 'Frost';
+        if (name === 'rotom-fan') return 'Fan';
+        if (name === 'rotom-mow') return 'Mow';
+        
+        // Castform forms
+        if (name === 'castform') return 'Normal';
+        if (name === 'castform-sunny') return 'Sunny';
+        if (name === 'castform-rainy') return 'Rainy';
+        if (name === 'castform-snowy') return 'Snowy';
+        
+        // Deoxys forms
+        if (name === 'deoxys-normal') return 'Normal';
+        if (name === 'deoxys-attack') return 'Attack';
+        if (name === 'deoxys-defense') return 'Defense';
+        if (name === 'deoxys-speed') return 'Speed';
+        
+        // Shaymin forms
+        if (name === 'shaymin-land') return 'Land';
+        if (name === 'shaymin-sky') return 'Sky';
+        
+        // Giratina forms
+        if (name === 'giratina-altered') return 'Altered';
+        if (name === 'giratina-origin') return 'Origin';
+        
+        // Darmanitan forms
+        if (name.includes('darmanitan-standard')) return name.includes('galar') ? 'Galarian Standard' : 'Standard';
+        if (name.includes('darmanitan-zen')) return name.includes('galar') ? 'Galarian Zen' : 'Zen';
+        
+        // Tornadus/Thundurus/Landorus forms
+        if (name.endsWith('-incarnate')) return 'Incarnate';
+        if (name.endsWith('-therian')) return 'Therian';
+        
+        // Kyurem forms
+        if (name === 'kyurem') return 'Normal';
+        if (name === 'kyurem-black') return 'Black';
+        if (name === 'kyurem-white') return 'White';
+        
+        // Zygarde forms
+        if (name === 'zygarde' || name === 'zygarde-50') return '50%';
+        if (name === 'zygarde-10') return '10%';
+        if (name === 'zygarde-complete') return 'Complete';
+        
+        // Oricorio forms
+        if (name === 'oricorio-baile') return 'Baile Style';
+        if (name === 'oricorio-pom-pom') return 'Pom-Pom Style';
+        if (name === 'oricorio-pau') return "Pa'u Style";
+        if (name === 'oricorio-sensu') return 'Sensu Style';
+        
+        // Lycanroc forms
+        if (name === 'lycanroc-midday') return 'Midday';
+        if (name === 'lycanroc-midnight') return 'Midnight';
+        if (name === 'lycanroc-dusk') return 'Dusk';
+        
+        // Necrozma forms
+        if (name === 'necrozma') return 'Normal';
+        if (name === 'necrozma-dusk') return 'Dusk Mane';
+        if (name === 'necrozma-dawn') return 'Dawn Wings';
+        if (name === 'necrozma-ultra') return 'Ultra';
+        
+        // Urshifu forms
+        if (name === 'urshifu-single-strike') return 'Single Strike';
+        if (name === 'urshifu-rapid-strike') return 'Rapid Strike';
+        
+        // Calyrex forms
+        if (name === 'calyrex') return 'Normal';
+        if (name === 'calyrex-ice') return 'Ice Rider';
+        if (name === 'calyrex-shadow') return 'Shadow Rider';
+        
+        // Basculegion forms
+        if (name === 'basculegion-male') return 'Male';
+        if (name === 'basculegion-female') return 'Female';
+        
+        // Indeedee forms
+        if (name === 'indeedee-male') return 'Male';
+        if (name === 'indeedee-female') return 'Female';
+        
+        // Default: try to extract form suffix
+        if (name.includes('-')) {
+            const parts = name.split('-');
+            // Return capitalized form name if it exists
+            if (parts.length > 1) {
+                return parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+            }
+        }
+        
+        // Default case
+        return null;
+    }
+
+    formatPokemonName(pokemonName) {
+        // Handle regional forms and special cases
+        const name = pokemonName.toLowerCase();
+        
+        // Special handling for Eiscue
+        if (name === 'eiscue-ice' || name === 'eiscue-noice' || name === 'eiscue') {
+            return 'Eiscue';
+        }
+        
+        // Paradox Pokemon - treat as multi-word names
+        const paradoxPokemon = [
+            'scream-tail', 'brute-bonnet', 'flutter-mane', 'slither-wing', 'sandy-shocks',
+            'roaring-moon', 'great-tusk', 'walking-wake', 'gouging-fire', 'raging-bolt',
+            'iron-bundle', 'iron-hands', 'iron-jugulis', 'iron-moth', 'iron-thorns',
+            'iron-treads', 'iron-valiant', 'iron-leaves', 'iron-boulder', 'iron-crown'
+        ];
+        
+        if (paradoxPokemon.includes(name)) {
+            return name.split('-').map(word => this.capitalizeFirst(word)).join(' ');
+        }
+        
+        // Regional form mappings
+        const regionalForms = {
+            'alolan': 'Alolan',
+            'galarian': 'Galarian',
+            'hisuian': 'Hisuian',
+            'paldean': 'Paldean'
+        };
+        
+        // Check for regional forms
+        for (const [key, display] of Object.entries(regionalForms)) {
+            if (name.includes(key)) {
+                const baseName = name.replace(`-${key}`, '').replace(key, '');
+                return `${display} ${this.capitalizeFirst(baseName)}`;
+            }
+        }
+        
+        // Handle other special forms
+        if (name.includes('-')) {
+            const parts = name.split('-');
+            const baseName = parts[0];
+            const form = parts.slice(1).join(' ');
+            
+            // Special form handling
+            const formMappings = {
+                'mega': 'Mega',
+                'primal': 'Primal',
+                'origin': 'Origin Forme',
+                'altered': 'Altered Forme',
+                'sky': 'Sky Forme',
+                'land': 'Land Forme',
+                'black': 'Black',
+                'white': 'White',
+                'therian': 'Therian Forme',
+                'incarnate': 'Incarnate Forme'
+            };
+            
+            const mappedForm = formMappings[form] || this.capitalizeFirst(form);
+            return `${this.capitalizeFirst(baseName)} (${mappedForm})`;
+        }
+        
+        return this.capitalizeFirst(name);
+    }
+
+    capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
     async searchPokemon(event) {
         const query = event.target.value.toLowerCase().trim();
         if (query.length < 2) {
@@ -329,11 +643,72 @@ class PokemonTeamBuilder {
             return;
         }
 
-        const filteredPokemon = this.allPokemon.filter(pokemon => 
-            pokemon.name.toLowerCase().includes(query)
-        ).slice(0, 10);
+        // Search by species name first - group by base name
+        const speciesMap = new Map(); // Map of baseName -> { baseName, pokemonList: [] }
+        
+        // Search through allPokemon list to find matching species
+        for (const pokemon of this.allPokemon) {
+            const name = pokemon.name.toLowerCase();
+            
+            // Skip mega evolutions
+            if (this.isMegaEvolution(name)) {
+                continue;
+            }
+            
+            // Get base name (species name)
+            const baseName = this.getBasePokemonName(name);
+            
+            // Check if it matches the query
+            if (name.includes(query) || baseName.includes(query)) {
+                if (!speciesMap.has(baseName)) {
+                    speciesMap.set(baseName, { baseName, pokemonList: [] });
+                }
+                speciesMap.get(baseName).pokemonList.push(pokemon);
+            }
+        }
 
-        await this.displaySearchResults(filteredPokemon, 'search-results');
+        // Limit to 10 species to avoid too many results
+        const limitedSpecies = Array.from(speciesMap.values()).slice(0, 10);
+        
+        // For each matching species, get all its forms
+        const allForms = [];
+        for (const { pokemonList } of limitedSpecies) {
+            // Use the first Pokemon to get species data
+            const firstPokemon = pokemonList[0];
+            try {
+                const pokemonData = await this.getPokemonData(firstPokemon.name);
+                if (!pokemonData || !pokemonData.species) continue;
+                
+                // Get species data to access all varieties
+                const speciesData = await this.getPokemonSpecies(pokemonData.species.url);
+                if (!speciesData || !speciesData.varieties) continue;
+                
+                // Get all valid forms (excluding megas, totems, gmax)
+                const validForms = speciesData.varieties.filter(variety => {
+                    const formName = variety.pokemon.name.toLowerCase();
+                    return !this.isMegaEvolution(formName) && 
+                           !formName.includes('-totem') && 
+                           !formName.includes('-gmax');
+                });
+                
+                // Fetch data for each form
+                for (const variety of validForms) {
+                    try {
+                        const formData = await this.getPokemonData(variety.pokemon.name);
+                        if (formData) {
+                            allForms.push({ formData, speciesData });
+                        }
+                    } catch (error) {
+                        console.warn(`Error loading form ${variety.pokemon.name}:`, error);
+                    }
+                }
+            } catch (error) {
+                console.warn(`Error loading species for ${firstPokemon.name}:`, error);
+            }
+        }
+
+        // Limit total results to 15 forms
+        await this.displaySearchResults(allForms.slice(0, 15), 'search-results');
     }
 
     async searchOpponent(event) {
@@ -343,40 +718,114 @@ class PokemonTeamBuilder {
             return;
         }
 
-        const filteredPokemon = this.allPokemon.filter(pokemon => 
-            pokemon.name.toLowerCase().includes(query)
-        ).slice(0, 10);
+        // Search by species name first - group by base name
+        const speciesMap = new Map(); // Map of baseName -> { baseName, pokemonList: [] }
+        
+        // Search through allPokemon list to find matching species
+        for (const pokemon of this.allPokemon) {
+            const name = pokemon.name.toLowerCase();
+            
+            // Skip mega evolutions
+            if (this.isMegaEvolution(name)) {
+                continue;
+            }
+            
+            // Get base name (species name)
+            const baseName = this.getBasePokemonName(name);
+            
+            // Check if it matches the query
+            if (name.includes(query) || baseName.includes(query)) {
+                if (!speciesMap.has(baseName)) {
+                    speciesMap.set(baseName, { baseName, pokemonList: [] });
+                }
+                speciesMap.get(baseName).pokemonList.push(pokemon);
+            }
+        }
 
-        await this.displaySearchResults(filteredPokemon, 'opponent-results', true);
+        // Limit to 10 species to avoid too many results
+        const limitedSpecies = Array.from(speciesMap.values()).slice(0, 10);
+        
+        // For each matching species, get all its forms
+        const allForms = [];
+        for (const { pokemonList } of limitedSpecies) {
+            // Use the first Pokemon to get species data
+            const firstPokemon = pokemonList[0];
+            try {
+                const pokemonData = await this.getPokemonData(firstPokemon.name);
+                if (!pokemonData || !pokemonData.species) continue;
+                
+                // Get species data to access all varieties
+                const speciesData = await this.getPokemonSpecies(pokemonData.species.url);
+                if (!speciesData || !speciesData.varieties) continue;
+                
+                // Get all valid forms (excluding megas, totems, gmax)
+                const validForms = speciesData.varieties.filter(variety => {
+                    const formName = variety.pokemon.name.toLowerCase();
+                    return !this.isMegaEvolution(formName) && 
+                           !formName.includes('-totem') && 
+                           !formName.includes('-gmax');
+                });
+                
+                // Fetch data for each form
+                for (const variety of validForms) {
+                    try {
+                        const formData = await this.getPokemonData(variety.pokemon.name);
+                        if (formData) {
+                            allForms.push({ formData, speciesData });
+                        }
+                    } catch (error) {
+                        console.warn(`Error loading form ${variety.pokemon.name}:`, error);
+                    }
+                }
+            } catch (error) {
+                console.warn(`Error loading species for ${firstPokemon.name}:`, error);
+            }
+        }
+
+        // Limit total results to 15 forms
+        await this.displaySearchResults(allForms.slice(0, 15), 'opponent-results', true);
     }
 
-    async displaySearchResults(pokemonList, containerId, isOpponent = false) {
+    async displaySearchResults(formList, containerId, isOpponent = false) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
 
-        if (pokemonList.length === 0) {
+        if (formList.length === 0) {
             container.innerHTML = '<div class="search-result-item">No Pokemon found</div>';
             container.classList.add('show');
             return;
         }
 
-        for (const pokemon of pokemonList) {
-            const pokemonData = await this.getPokemonData(pokemon.name);
-            if (pokemonData) {
-                const resultItem = this.createSearchResultItem(pokemonData, isOpponent);
-                container.appendChild(resultItem);
-            }
+        for (const { formData, speciesData } of formList) {
+            const resultItem = this.createSearchResultItem(formData, isOpponent, speciesData);
+            container.appendChild(resultItem);
         }
 
         container.classList.add('show');
     }
 
-    createSearchResultItem(pokemonData, isOpponent = false) {
+    createSearchResultItem(pokemonData, isOpponent = false, speciesData = null) {
         const item = document.createElement('div');
         item.className = 'search-result-item';
         
         // Get generation-appropriate types
         const adjustedTypes = this.getPokemonTypesForGeneration(pokemonData.name, pokemonData.types);
+        
+        // Get species name for display
+        const speciesName = speciesData ? speciesData.name : this.getBasePokemonName(pokemonData.name.toLowerCase());
+        const formattedSpeciesName = this.formatPokemonName(speciesName);
+        
+        // Get form name
+        const generation = speciesData ? this.getGenerationFromSpecies(speciesData) : null;
+        const formName = this.formatFormName(pokemonData.name, speciesData, generation);
+        
+        // Build display name: "SpeciesName FormName Form" or just "SpeciesName" if no form
+        let displayName;
+        if (formName && formName !== formattedSpeciesName) {
+            displayName = `${formattedSpeciesName} ${formName} Form`;
+        } else {
+            displayName = formattedSpeciesName;
+        }
         
         const typeIcons = adjustedTypes.map(type => 
             `<span class="type-badge type-${type.type.name}">
@@ -387,10 +836,14 @@ class PokemonTeamBuilder {
             </span>`
         ).join('');
 
+        const sprite = pokemonData.sprites.front_default || 
+                      pokemonData.sprites.other?.['official-artwork']?.front_default ||
+                      pokemonData.sprites.front_shiny;
+
         item.innerHTML = `
-            <img src="${pokemonData.sprites.front_default}" alt="${pokemonData.name}" class="pokemon-sprite">
+            <img src="${sprite}" alt="${displayName}" class="pokemon-sprite">
             <div class="pokemon-info">
-                <h3>${pokemonData.name}</h3>
+                <h3>${displayName}</h3>
                 <div class="pokemon-types">${typeIcons}</div>
             </div>
         `;
